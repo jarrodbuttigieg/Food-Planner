@@ -1,0 +1,1501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<title>Family Food Planner</title>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Food Planner">
+<meta name="theme-color" content="#F2F5EC">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%234C7A5B'/%3E%3Ctext x='50' y='68' font-size='50' text-anchor='middle'%3E%F0%9F%8D%BD%EF%B8%8F%3C/text%3E%3C/svg%3E">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+  :root{
+    --bg:#F2F5EC; --paper:#FFFFFF; --ink:#26332B; --inkSoft:#66766A; --line:#E2E7D9;
+    --sage:#4C7A5B; --sageSoft:#E4EEE2;
+    --mustard:#DB9F33; --mustardSoft:#FAEDD3;
+    --berry:#9C3E5C; --berrySoft:#F5E1E7;
+    --teal:#2E7D82; --tealSoft:#DDEEEE;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#DDE3D2;}
+  body{font-family:'Inter',system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;}
+  #shell{max-width:440px;margin:0 auto;min-height:100vh;background:var(--bg);box-shadow:0 0 40px rgba(0,0,0,.12);display:flex;flex-direction:column;padding-top:env(safe-area-inset-top);}
+  h1,h2,.serif{font-family:'Fraunces',serif;}
+  #view{flex:1;padding-bottom:8px;}
+  button{font-family:inherit;cursor:pointer;border:none;background:none;color:inherit;}
+  input,select{font-family:inherit;font-size:14.5px;}
+  .px5{padding-left:20px;padding-right:20px;}
+
+  /* header */
+  .page-title{font-size:26px;font-weight:700;margin:0;}
+  .page-sub{font-size:13.5px;color:var(--inkSoft);margin:4px 0 0;}
+
+  /* pills */
+  .pill{padding:7px 12px;border-radius:999px;font-size:13px;font-weight:500;border:1px solid var(--line);background:#fff;color:var(--inkSoft);white-space:nowrap;display:inline-flex;align-items:center;gap:4px;}
+  .pill.active{color:#fff;border-color:transparent;}
+  .pillrow{display:flex;gap:8px;overflow-x:auto;padding:0 20px 12px;}
+  .pillrow::-webkit-scrollbar{display:none;}
+
+  /* week */
+  .weekstrip{display:flex;gap:12px;overflow-x:auto;padding:0 20px 8px;scroll-snap-type:x proximity;}
+  .weekstrip::-webkit-scrollbar{display:none;}
+  .daycard{width:200px;flex-shrink:0;scroll-snap-align:start;border-radius:16px;background:#fff;border:1px solid var(--line);overflow:hidden;}
+  .daycard-top{display:flex;align-items:center;justify-content:space-between;padding:12px 12px 0;}
+  .daycard-name{font-size:15px;font-weight:600;}
+  .clockbtn{width:28px;height:28px;border-radius:999px;display:flex;align-items:center;justify-content:center;background:var(--bg);color:var(--inkSoft);font-size:13px;}
+  .clockbtn.active{background:var(--mustardSoft);color:var(--mustard);}
+  .daycard-body{padding:8px 12px 12px;}
+  .empty-slot{width:100%;height:86px;border-radius:12px;border:1px dashed var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:var(--inkSoft);}
+  .empty-slot span{font-size:12px;font-weight:500;}
+  .slots{padding:8px 10px 12px;display:flex;flex-direction:column;gap:6px;}
+  .slot-row{display:flex;align-items:center;gap:8px;width:100%;padding:7px 8px;border-radius:10px;text-align:left;}
+  .slot-row.filled{background:var(--bg);}
+  .slot-row.empty{border:1px dashed var(--line);}
+  .slot-dot{width:20px;height:20px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;color:#fff;font-size:10px;}
+  .slot-dot.outline{background:transparent;border:1.5px dashed;font-size:12px;font-weight:700;}
+  .slot-text{flex:1;min-width:0;display:flex;flex-direction:column;}
+  .slot-label-sm{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--inkSoft);}
+  .slot-recipe{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--ink);}
+  .slot-warn{font-size:11px;flex-shrink:0;}
+  .badge{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;padding:2px 8px;border-radius:999px;display:inline-flex;align-items:center;gap:3px;}
+  .meal-name{margin-top:6px;font-size:14px;font-weight:600;line-height:1.3;}
+  .meal-meta{margin-top:4px;font-size:11.5px;color:var(--inkSoft);display:flex;align-items:center;gap:4px;}
+  .conflict-note{margin-top:4px;font-size:11px;color:var(--berry);display:flex;align-items:center;gap:4px;}
+
+  .hint{margin:16px 20px 4px;border-radius:16px;padding:14px;background:var(--sageSoft);display:flex;gap:10px;align-items:flex-start;font-size:13px;line-height:1.5;}
+  .today-card{margin:14px 20px 0;border-radius:18px;background:#fff;border:1.5px solid var(--sage);overflow:hidden;}
+  .today-card-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px 10px;}
+  .today-badge{display:inline-block;font-size:10px;font-weight:700;letter-spacing:.06em;color:#fff;background:var(--sage);padding:3px 8px;border-radius:999px;margin-bottom:4px;}
+  .today-day-name{font-size:18px;font-weight:600;color:var(--ink);}
+  .today-slots{display:flex;flex-direction:column;}
+  .today-slot{display:flex;align-items:center;gap:12px;width:100%;padding:12px 16px;border-top:1px solid var(--line);text-align:left;}
+  .today-slot-recipe{font-size:14.5px;font-weight:600;color:var(--ink);}
+  .today-slot-chevron{color:var(--inkSoft);font-size:18px;}
+  .today-chip{display:inline-block;font-size:8.5px;font-weight:700;letter-spacing:.04em;color:#fff;background:var(--sage);padding:2px 5px;border-radius:5px;vertical-align:middle;margin-left:4px;}
+  .daycard.today{border-color:var(--sage);border-width:1.5px;}
+
+  /* recipe grid */
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 20px 32px;}
+  .rcard{text-align:left;border-radius:16px;background:#fff;border:1px solid var(--line);overflow:hidden;position:relative;width:100%;cursor:pointer;}
+  .rcard-fav-row{position:absolute;top:14px;right:10px;z-index:2;display:flex;gap:5px;}
+  .icon-btn{width:26px;height:26px;border-radius:999px;background:rgba(255,255,255,.92);box-shadow:0 1px 3px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:13px;color:var(--inkSoft);}
+  .icon-btn.fav-active{background:var(--mustardSoft);color:var(--mustard);}
+  .icon-btn.dis-active{background:var(--berrySoft);color:var(--berry);}
+  .rcard-strip{height:8px;}
+  .rcard-hole{position:absolute;left:50%;top:3px;transform:translateX(-50%);width:12px;height:12px;border-radius:999px;background:var(--bg);border:1px solid var(--line);}
+  .rcard-body{padding:14px;}
+  .rcard-body.compact{padding:12px;}
+  .rcard-badges{display:flex;gap:6px;margin-bottom:6px;flex-wrap:wrap;}
+  .rcard-name{font-size:17px;font-weight:600;line-height:1.3;}
+  .rcard-body.compact .rcard-name{font-size:15px;}
+  .rcard-meta{margin-top:6px;font-size:12px;color:var(--inkSoft);display:flex;align-items:center;gap:4px;}
+
+  /* sheet */
+  #sheetRoot{position:fixed;inset:0;z-index:50;display:none;}
+  #sheetRoot.open{display:block;}
+  .sheet-backdrop{position:absolute;inset:0;background:rgba(0,0,0,.4);}
+  .sheet-wrap{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:440px;}
+  .sheet{background:#fff;border-radius:24px 24px 0 0;max-height:88vh;display:flex;flex-direction:column;box-shadow:0 -8px 30px rgba(0,0,0,.2);animation:slideup .22s ease-out;}
+  @keyframes slideup{from{transform:translateY(24px);opacity:.4}to{transform:translateY(0);opacity:1}}
+  .sheet-head{display:flex;align-items:center;justify-content:space-between;padding:20px 20px 12px;border-bottom:1px solid var(--line);}
+  .sheet-title{font-size:19px;font-weight:600;}
+  .sheet-close{width:32px;height:32px;border-radius:999px;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:15px;}
+  .sheet-body{overflow-y:auto;padding:16px 20px 28px;}
+  .label{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:.03em;color:var(--inkSoft);margin-bottom:6px;display:block;}
+  .field{width:100%;border:1px solid var(--line);border-radius:12px;padding:10px 14px;font-size:15px;color:var(--ink);margin-bottom:16px;outline:none;background:#fff;}
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .btn-primary{width:100%;padding:13px;border-radius:12px;font-size:15px;font-weight:600;color:#fff;background:var(--ink);}
+  .btn-primary:disabled{opacity:.4;}
+  .btn-ghost{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;}
+  .chip{display:inline-flex;align-items:center;gap:5px;padding:6px 8px 6px 12px;border-radius:999px;font-size:12px;font-weight:500;background:var(--berrySoft);color:var(--berry);}
+  .chip button{padding:2px;border-radius:999px;display:flex;}
+  .ing-row{display:flex;gap:6px;align-items:center;margin-bottom:8px;}
+  .ing-row input.ing-name{flex:2;min-width:0;}
+  .ing-row input.ing-qty{width:52px;}
+  .ing-row input.ing-unit{width:60px;}
+  .ing-row select.ing-cat{width:96px;font-size:11.5px;}
+  .ing-row input,.ing-row select{border:1px solid var(--line);border-radius:8px;padding:8px;font-size:13px;color:var(--ink);}
+  .ing-remove{padding:6px;color:var(--inkSoft);flex-shrink:0;}
+  .warn-box{margin-bottom:16px;border-radius:12px;padding:12px;background:var(--berrySoft);}
+  .warn-title{font-size:12px;font-weight:600;color:var(--berry);display:flex;align-items:center;gap:6px;margin-bottom:4px;}
+  .warn-line{font-size:12.5px;color:var(--berry);}
+  .ing-list{list-style:none;padding:0;margin:0 0 20px;}
+  .ing-list li{display:flex;justify-content:space-baseline;justify-content:space-between;font-size:14.5px;padding:5px 0;}
+  .ing-list .qty{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--inkSoft);}
+  .method-list{list-style:none;counter-reset:step;padding:0;margin:0 0 20px;}
+  .method-list li{counter-increment:step;position:relative;padding:4px 0 4px 34px;font-size:14.5px;line-height:1.5;color:var(--ink);margin-bottom:6px;}
+  .method-list li::before{content:counter(step);position:absolute;left:0;top:4px;width:24px;height:24px;border-radius:999px;background:var(--sageSoft);color:var(--sage);font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;}
+
+  /* shopping */
+  .shop-empty{margin:0 20px;border-radius:16px;padding:28px 20px;text-align:center;background:#fff;border:1px solid var(--line);color:var(--inkSoft);font-size:14px;}
+  .shop-group{margin:0 20px 20px;}
+  .shop-cat{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:var(--sage);margin-bottom:8px;}
+  .shop-list{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;}
+  .shop-item{width:100%;display:flex;align-items:center;gap:12px;padding:12px 16px;border-top:1px solid var(--line);text-align:left;}
+  .shop-item:first-child{border-top:none;}
+  .checkbox{width:20px;height:20px;border-radius:6px;border:1px solid var(--line);flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;color:#fff;}
+  .checkbox.checked{background:var(--sage);border-color:var(--sage);}
+  .shop-item-name{flex:1;font-size:14.5px;}
+  .shop-item-name.checked{color:var(--inkSoft);text-decoration:line-through;}
+  .shop-item-qty{font-family:'JetBrains Mono',monospace;font-size:12.5px;color:var(--inkSoft);}
+
+  /* family */
+  .member-card{margin:0 20px 12px;border-radius:16px;background:#fff;border:1px solid var(--line);padding:16px;}
+  .member-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .member-id{display:flex;align-items:center;gap:10px;}
+  .avatar{width:36px;height:36px;border-radius:999px;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:600;font-size:14px;font-family:'Fraunces',serif;}
+  .member-name{font-size:15.5px;font-weight:600;}
+  .dislikes-row{display:flex;flex-wrap:wrap;gap:6px;align-items:center;position:relative;}
+  .add-dislike-btn{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:500;padding:6px 10px;border-radius:999px;border:1px dashed var(--line);color:var(--inkSoft);}
+  .dropdown{position:absolute;z-index:5;top:34px;left:0;background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.12);padding:8px;width:220px;}
+  .dropdown-search{width:100%;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;color:var(--ink);margin-bottom:6px;outline:none;}
+  .dropdown-list{max-height:220px;overflow-y:auto;}
+  .dropdown button{display:block;width:100%;text-align:left;padding:8px 10px;border-radius:8px;font-size:13px;}
+  .dropdown button:hover{background:#F5F5F0;}
+  .add-member-box{margin:0 20px 32px;border:1px dashed var(--line);border-radius:16px;padding:14px;display:flex;align-items:center;gap:8px;}
+  .add-member-box input{flex:1;border:none;outline:none;font-size:14.5px;background:transparent;color:var(--ink);}
+  .round-btn{width:36px;height:36px;border-radius:999px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px;}
+
+  /* nav */
+  #navRoot{position:sticky;bottom:0;background:#fff;border-top:1px solid var(--line);padding:10px 12px calc(10px + env(safe-area-inset-bottom));}
+  .navrow{display:flex;justify-content:space-between;}
+  .navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;padding:4px 0;}
+  .navbtn .navicon{font-size:19px;}
+  .navbtn .navlabel{font-size:10.5px;font-weight:500;color:var(--inkSoft);}
+  .navbtn.active .navlabel{color:var(--sage);}
+
+  .fab{width:40px;height:40px;border-radius:999px;background:var(--ink);color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .top-row{display:flex;align-items:center;justify-content:space-between;padding:24px 20px 12px;}
+</style>
+</head>
+<body>
+<div id="shell">
+  <div id="view"></div>
+  <div id="navRoot"></div>
+</div>
+<div id="sheetRoot"></div>
+
+<script>
+/* ---------------------------------- palette / constants ---------------------------------- */
+const COLOR = { sage:'var(--sage)', sageSoft:'var(--sageSoft)', mustard:'var(--mustard)', mustardSoft:'var(--mustardSoft)', berry:'var(--berry)', berrySoft:'var(--berrySoft)', teal:'var(--teal)', tealSoft:'var(--tealSoft)', ink:'var(--ink)' };
+const CATEGORY_STYLE = {
+  Breakfast: { c: COLOR.mustard, bg: COLOR.mustardSoft },
+  Lunch: { c: COLOR.sage, bg: COLOR.sageSoft },
+  Dinner: { c: COLOR.berry, bg: COLOR.berrySoft },
+  Snack: { c: COLOR.teal, bg: COLOR.tealSoft },
+};
+const DISLIKE_TAGS = [
+  "Mushrooms","Seafood","Fish","Shellfish","Spicy","Coriander","Olives","Onions","Garlic",
+  "Extra Cheesy","Dairy","Egg","Red Meat","Beef","Pork","Bacon","Chicken","Tofu",
+  "Beans","Lentils","Peas","Broccoli","Cauliflower","Spinach","Capsicum","Tomatoes",
+  "Cucumber","Avocado","Bananas","Nuts","Peanuts","Coconut","Curry","Raisins"
+];
+const ING_CATEGORIES = ["Produce","Meat & Seafood","Dairy & Eggs","Bakery & Grains","Pantry","Other"];
+const MEMBER_COLORS = [COLOR.sage, COLOR.mustard, COLOR.berry, COLOR.teal, "#6D6A9C", "#B5652F"];
+let _id = 1000;
+const nid = () => String(_id++);
+const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+
+/* ---------------------------------- seed data ---------------------------------- */
+const TAG_STYLE = {
+  "Healthy": { c:"#3F7A52", bg:"#E3F0E6", icon:"🌱" },
+  "Kid-Friendly": { c:"#B5652F", bg:"#FBE9DA", icon:"🧒" },
+  "Slow Cooker": { c:"#8A5A2B", bg:"#F1E4D3", icon:"🥘" },
+};
+function R(name, category, prepTime, flags, tags, rows){
+  return { id: nid(), name, category, prepTime, flags, tags,
+    ingredients: rows.map(([n,qty,unit,cat]) => ({ name:n, qty, unit, category:cat })) };
+}
+function seedRecipes(){ return [
+  /* ---------- Breakfast (25) ---------- */
+  R("Veggie Scramble Toast","Breakfast",15,["Egg"],["Healthy"],[["Eggs",6,"","Dairy & Eggs"],["Sourdough bread",4,"slices","Bakery & Grains"],["Baby spinach",1,"cup","Produce"],["Cherry tomatoes",1,"cup","Produce"],["Cheddar cheese",50,"g","Dairy & Eggs"],["Butter",1,"tbsp","Dairy & Eggs"]]),
+  R("Overnight Oats","Breakfast",10,[],["Healthy"],[["Rolled oats",2,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Chia seeds",2,"tbsp","Pantry"],["Banana",2,"","Produce"],["Honey",2,"tbsp","Pantry"],["Blueberries",1,"cup","Produce"]]),
+  R("Weekend Pancakes","Breakfast",20,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1.5,"cup","Dairy & Eggs"],["Butter",2,"tbsp","Dairy & Eggs"],["Maple syrup",0.5,"cup","Pantry"],["Blueberries",1,"cup","Produce"]]),
+  R("Greek Yogurt Parfait","Breakfast",8,[],["Healthy","Kid-Friendly"],[["Greek yogurt",2,"cup","Dairy & Eggs"],["Granola",1,"cup","Pantry"],["Strawberries",1,"cup","Produce"],["Honey",2,"tbsp","Pantry"]]),
+  R("Banana Oat Pancakes","Breakfast",20,["Egg"],["Healthy","Kid-Friendly"],[["Rolled oats",1.5,"cup","Pantry"],["Banana",3,"","Produce"],["Eggs",3,"","Dairy & Eggs"],["Cinnamon",1,"tsp","Pantry"],["Milk",0.5,"cup","Dairy & Eggs"]]),
+  R("Avocado Toast","Breakfast",10,[],["Healthy"],[["Avocado",2,"","Produce"],["Sourdough bread",4,"slices","Bakery & Grains"],["Cherry tomatoes",1,"cup","Produce"],["Lemon",1,"","Produce"],["Chilli flakes",1,"tsp","Pantry"]]),
+  R("Breakfast Burrito","Breakfast",20,["Egg","Spicy"],[],[["Eggs",6,"","Dairy & Eggs"],["Tortilla wraps",4,"","Bakery & Grains"],["Black beans",1,"tin","Pantry"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Salsa",0.5,"cup","Pantry"]]),
+  R("French Toast Sticks","Breakfast",15,["Egg"],["Kid-Friendly"],[["Bread",6,"slices","Bakery & Grains"],["Eggs",3,"","Dairy & Eggs"],["Milk",0.5,"cup","Dairy & Eggs"],["Cinnamon",1,"tsp","Pantry"],["Maple syrup",0.5,"cup","Pantry"]]),
+  R("Smoothie Bowl","Breakfast",10,[],["Healthy"],[["Frozen berries",2,"cup","Produce"],["Banana",1,"","Produce"],["Greek yogurt",1,"cup","Dairy & Eggs"],["Granola",0.5,"cup","Pantry"],["Chia seeds",1,"tbsp","Pantry"]]),
+  R("Veggie Frittata","Breakfast",30,["Egg"],["Healthy"],[["Eggs",8,"","Dairy & Eggs"],["Zucchini",1,"","Produce"],["Capsicum",1,"","Produce"],["Feta cheese",60,"g","Dairy & Eggs"],["Onion",1,"","Produce"]]),
+  R("PB Banana Toast","Breakfast",8,[],["Kid-Friendly","Healthy"],[["Wholegrain bread",4,"slices","Bakery & Grains"],["Peanut butter",4,"tbsp","Pantry"],["Banana",2,"","Produce"]]),
+  R("Breakfast Quesadilla","Breakfast",15,["Egg","Extra Cheesy"],["Kid-Friendly"],[["Eggs",4,"","Dairy & Eggs"],["Tortilla wraps",4,"","Bakery & Grains"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Ham",100,"g","Meat & Seafood"]]),
+  R("Chia Pudding","Breakfast",5,[],["Healthy"],[["Chia seeds",0.5,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Vanilla extract",1,"tsp","Pantry"],["Mixed berries",1,"cup","Produce"]]),
+  R("Blueberry Muffins","Breakfast",30,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Butter",0.5,"cup","Dairy & Eggs"],["Sugar",0.75,"cup","Pantry"],["Blueberries",1.5,"cup","Produce"]]),
+  R("Shakshuka","Breakfast",25,["Egg","Spicy"],["Healthy"],[["Eggs",6,"","Dairy & Eggs"],["Tomato passata",500,"ml","Pantry"],["Capsicum",1,"","Produce"],["Onion",1,"","Produce"],["Cumin",1,"tsp","Pantry"]]),
+  R("Granola & Milk","Breakfast",5,[],["Kid-Friendly"],[["Granola",3,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Banana",2,"","Produce"]]),
+  R("Breakfast Hash","Breakfast",25,[],["Healthy"],[["Potatoes",4,"","Produce"],["Capsicum",1,"","Produce"],["Onion",1,"","Produce"],["Eggs",4,"","Dairy & Eggs"],["Paprika",1,"tsp","Pantry"]]),
+  R("Waffles with Berries","Breakfast",20,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1.5,"cup","Dairy & Eggs"],["Mixed berries",1,"cup","Produce"],["Maple syrup",0.5,"cup","Pantry"]]),
+  R("Breakfast Egg Muffins","Breakfast",25,["Egg"],["Healthy"],[["Eggs",8,"","Dairy & Eggs"],["Spinach",1,"cup","Produce"],["Cherry tomatoes",1,"cup","Produce"],["Cheddar cheese",50,"g","Dairy & Eggs"]]),
+  R("Cinnamon Raisin Toast","Breakfast",8,[],["Kid-Friendly"],[["Raisin bread",4,"slices","Bakery & Grains"],["Butter",2,"tbsp","Dairy & Eggs"],["Cinnamon",1,"tsp","Pantry"],["Honey",2,"tbsp","Pantry"]]),
+  R("Bircher Muesli","Breakfast",10,[],["Healthy"],[["Rolled oats",2,"cup","Pantry"],["Apple",2,"","Produce"],["Milk",1.5,"cup","Dairy & Eggs"],["Greek yogurt",0.5,"cup","Dairy & Eggs"],["Honey",2,"tbsp","Pantry"]]),
+  R("Mini Pancake Skewers","Breakfast",20,["Egg"],["Kid-Friendly"],[["Flour",1.5,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Strawberries",1,"cup","Produce"],["Wooden skewers",6,"","Other"]]),
+  R("Egg & Cheese English Muffin","Breakfast",12,["Egg","Extra Cheesy"],["Kid-Friendly"],[["English muffins",4,"","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Ham",100,"g","Meat & Seafood"]]),
+  R("Sweet Potato Toast","Breakfast",15,[],["Healthy"],[["Sweet potato",2,"","Produce"],["Almond butter",4,"tbsp","Pantry"],["Banana",1,"","Produce"],["Cinnamon",1,"tsp","Pantry"]]),
+  R("Baked Oatmeal Cups","Breakfast",30,["Egg"],["Healthy","Kid-Friendly"],[["Rolled oats",3,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Banana",2,"","Produce"],["Blueberries",1,"cup","Produce"]]),
+  R("Cheese Omelette","Breakfast",10,["Egg","Extra Cheesy"],["Kid-Friendly"],[["Eggs",4,"","Dairy & Eggs"],["Cheddar cheese",60,"g","Dairy & Eggs"],["Butter",1,"tbsp","Dairy & Eggs"],["Milk",2,"tbsp","Dairy & Eggs"]]),
+  R("Ham & Cheese Omelette","Breakfast",12,["Egg","Extra Cheesy"],[],[["Eggs",4,"","Dairy & Eggs"],["Ham",100,"g","Meat & Seafood"],["Cheddar cheese",60,"g","Dairy & Eggs"],["Butter",1,"tbsp","Dairy & Eggs"]]),
+  R("Spanish Tortilla","Breakfast",35,["Egg"],["Healthy"],[["Eggs",6,"","Dairy & Eggs"],["Potatoes",3,"","Produce"],["Onion",1,"","Produce"],["Olive oil",3,"tbsp","Pantry"]]),
+  R("Buttermilk Biscuits & Gravy","Breakfast",30,["Red Meat","Pork"],[],[["Flour",2,"cup","Pantry"],["Buttermilk",1,"cup","Dairy & Eggs"],["Butter",0.5,"cup","Dairy & Eggs"],["Sausages",300,"g","Meat & Seafood"],["Milk",1.5,"cup","Dairy & Eggs"]]),
+  R("Cottage Cheese Bowl","Breakfast",5,["Nuts"],["Healthy"],[["Cottage cheese",2,"cup","Dairy & Eggs"],["Pineapple",1,"cup","Produce"],["Almonds",0.25,"cup","Pantry"]]),
+  R("Breakfast Tacos","Breakfast",15,["Egg","Spicy"],[],[["Eggs",6,"","Dairy & Eggs"],["Small tortillas",6,"","Bakery & Grains"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Salsa",0.5,"cup","Pantry"],["Black beans",1,"tin","Pantry"]]),
+  R("Huevos Rancheros","Breakfast",20,["Egg","Spicy"],[],[["Eggs",4,"","Dairy & Eggs"],["Corn tortillas",4,"","Bakery & Grains"],["Black beans",1,"tin","Pantry"],["Salsa",0.5,"cup","Pantry"],["Cheddar cheese",60,"g","Dairy & Eggs"]]),
+  R("Congee (Rice Porridge)","Breakfast",45,[],["Healthy"],[["Rice",1,"cup","Bakery & Grains"],["Chicken stock",2,"l","Pantry"],["Ginger",1,"thumb","Produce"],["Spring onion",2,"","Produce"],["Soy sauce",2,"tbsp","Pantry"]]),
+  R("Steel Cut Oatmeal","Breakfast",25,[],["Healthy"],[["Steel cut oats",2,"cup","Pantry"],["Milk",3,"cup","Dairy & Eggs"],["Cinnamon",1,"tsp","Pantry"],["Honey",2,"tbsp","Pantry"]]),
+  R("Peanut Butter Oatmeal","Breakfast",10,["Peanuts"],["Healthy","Kid-Friendly"],[["Rolled oats",2,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Peanut butter",4,"tbsp","Pantry"],["Banana",2,"","Produce"]]),
+  R("Apple Cinnamon Oatmeal","Breakfast",12,[],["Healthy","Kid-Friendly"],[["Rolled oats",2,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Apple",2,"","Produce"],["Cinnamon",1,"tsp","Pantry"],["Honey",2,"tbsp","Pantry"]]),
+  R("Breakfast Sausage & Eggs","Breakfast",15,["Egg","Red Meat","Pork"],[],[["Sausages",6,"","Meat & Seafood"],["Eggs",4,"","Dairy & Eggs"],["Butter",1,"tbsp","Dairy & Eggs"]]),
+  R("Corned Beef Hash","Breakfast",25,["Red Meat","Beef"],[],[["Corned beef",400,"g","Meat & Seafood"],["Potatoes",4,"","Produce"],["Onion",1,"","Produce"],["Eggs",4,"","Dairy & Eggs"]]),
+  R("Kimchi Fried Rice","Breakfast",20,["Spicy","Egg"],[],[["Cooked rice",3,"cup","Bakery & Grains"],["Kimchi",1,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Sesame oil",2,"tbsp","Pantry"],["Spring onion",2,"","Produce"]]),
+  R("Dutch Baby Pancake","Breakfast",25,["Egg"],["Kid-Friendly"],[["Flour",0.5,"cup","Pantry"],["Eggs",3,"","Dairy & Eggs"],["Milk",0.5,"cup","Dairy & Eggs"],["Butter",3,"tbsp","Dairy & Eggs"],["Icing sugar",2,"tbsp","Pantry"]]),
+  R("Crepes with Chocolate Spread","Breakfast",20,["Egg"],["Kid-Friendly"],[["Flour",1,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1.5,"cup","Dairy & Eggs"],["Chocolate spread",0.5,"cup","Pantry"],["Strawberries",1,"cup","Produce"]]),
+  R("Croissant Breakfast Sandwich","Breakfast",12,["Egg","Extra Cheesy","Bacon"],[],[["Croissants",4,"","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Bacon",6,"slices","Meat & Seafood"]]),
+  R("Bagel with Lox","Breakfast",8,["Seafood","Fish"],[],[["Bagels",4,"","Bakery & Grains"],["Smoked salmon",200,"g","Meat & Seafood"],["Cream cheese",6,"tbsp","Dairy & Eggs"],["Red onion",1,"","Produce"],["Capers",2,"tbsp","Pantry"]]),
+  R("Everything Bagel with Cream Cheese","Breakfast",5,[],["Kid-Friendly"],[["Everything bagels",4,"","Bakery & Grains"],["Cream cheese",8,"tbsp","Dairy & Eggs"]]),
+  R("Breakfast Skillet","Breakfast",30,["Egg"],["Healthy"],[["Potatoes",3,"","Produce"],["Capsicum",1,"","Produce"],["Onion",1,"","Produce"],["Eggs",4,"","Dairy & Eggs"],["Sausages",3,"","Meat & Seafood"]]),
+  R("Turkey Sausage Wrap","Breakfast",15,["Egg","Extra Cheesy"],[],[["Turkey sausages",4,"","Meat & Seafood"],["Tortilla wraps",4,"","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Cheddar cheese",60,"g","Dairy & Eggs"]]),
+  R("Mango Smoothie","Breakfast",5,[],["Healthy","Kid-Friendly"],[["Mango",2,"cup","Produce"],["Greek yogurt",1,"cup","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Honey",1,"tbsp","Pantry"]]),
+  R("Berry Protein Smoothie","Breakfast",5,[],["Healthy"],[["Mixed berries",2,"cup","Produce"],["Greek yogurt",1,"cup","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Protein powder",2,"scoop","Pantry"]]),
+  R("Green Smoothie","Breakfast",5,["Spinach"],["Healthy"],[["Spinach",2,"cup","Produce"],["Banana",2,"","Produce"],["Apple",1,"","Produce"],["Milk",1.5,"cup","Dairy & Eggs"]]),
+  R("Breakfast Popsicles","Breakfast",10,[],["Kid-Friendly","Healthy"],[["Greek yogurt",2,"cup","Dairy & Eggs"],["Mixed berries",2,"cup","Produce"],["Honey",3,"tbsp","Pantry"]]),
+  R("Baked Eggs in Avocado","Breakfast",20,["Egg","Avocado"],["Healthy"],[["Avocado",2,"","Produce"],["Eggs",2,"","Dairy & Eggs"],["Cheddar cheese",30,"g","Dairy & Eggs"],["Chilli flakes",0.5,"tsp","Pantry"]]),
+  R("Spinach & Feta Omelette","Breakfast",12,["Egg","Extra Cheesy","Spinach"],["Healthy"],[["Eggs",4,"","Dairy & Eggs"],["Spinach",1,"cup","Produce"],["Feta cheese",60,"g","Dairy & Eggs"],["Butter",1,"tbsp","Dairy & Eggs"]]),
+  R("Denver Omelette","Breakfast",15,["Egg","Extra Cheesy"],[],[["Eggs",6,"","Dairy & Eggs"],["Ham",100,"g","Meat & Seafood"],["Capsicum",1,"","Produce"],["Onion",1,"","Produce"],["Cheddar cheese",60,"g","Dairy & Eggs"]]),
+  R("Pumpkin Pancakes","Breakfast",20,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Pumpkin puree",1,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Cinnamon",1,"tsp","Pantry"]]),
+  R("Zucchini Bread","Breakfast",60,["Egg"],["Healthy"],[["Flour",2,"cup","Pantry"],["Zucchini",2,"","Produce"],["Eggs",2,"","Dairy & Eggs"],["Sugar",0.75,"cup","Pantry"],["Cinnamon",1,"tsp","Pantry"]]),
+  R("Carrot Muffins","Breakfast",30,["Egg"],["Healthy","Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Carrot",2,"","Produce"],["Eggs",2,"","Dairy & Eggs"],["Sugar",0.5,"cup","Pantry"],["Cinnamon",1,"tsp","Pantry"]]),
+  R("Apple Cinnamon Muffins","Breakfast",30,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Apple",2,"","Produce"],["Eggs",2,"","Dairy & Eggs"],["Sugar",0.5,"cup","Pantry"],["Cinnamon",1,"tsp","Pantry"]]),
+  R("Toad in the Hole","Breakfast",30,["Egg","Red Meat","Pork"],["Kid-Friendly"],[["Sausages",6,"","Meat & Seafood"],["Flour",1,"cup","Pantry"],["Eggs",3,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"]]),
+  R("Breakfast Pizza","Breakfast",25,["Egg","Extra Cheesy","Bacon"],["Kid-Friendly"],[["Pizza dough",1,"","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Mozzarella",150,"g","Dairy & Eggs"],["Bacon",100,"g","Meat & Seafood"]]),
+  R("Yogurt & Granola Parfait Cups","Breakfast",8,[],["Healthy","Kid-Friendly"],[["Greek yogurt",2,"cup","Dairy & Eggs"],["Granola",1,"cup","Pantry"],["Mixed berries",1,"cup","Produce"]]),
+  R("Peanut Butter Overnight Oats","Breakfast",8,["Peanuts"],["Healthy"],[["Rolled oats",2,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Peanut butter",4,"tbsp","Pantry"],["Chia seeds",2,"tbsp","Pantry"]]),
+  R("Coconut Chia Pudding","Breakfast",5,["Coconut"],["Healthy"],[["Chia seeds",0.5,"cup","Pantry"],["Coconut milk",2,"cup","Pantry"],["Honey",2,"tbsp","Pantry"],["Mango",1,"cup","Produce"]]),
+  R("Breakfast Burrito Bowl","Breakfast",20,["Egg","Spicy","Avocado"],["Healthy"],[["Eggs",6,"","Dairy & Eggs"],["Black beans",1,"tin","Pantry"],["Cooked rice",2,"cup","Bakery & Grains"],["Avocado",1,"","Produce"],["Salsa",0.5,"cup","Pantry"]]),
+  R("Fried Egg Sandwich","Breakfast",8,["Egg"],["Kid-Friendly"],[["Eggs",4,"","Dairy & Eggs"],["Bread",4,"slices","Bakery & Grains"],["Butter",2,"tbsp","Dairy & Eggs"],["Cheddar cheese",40,"g","Dairy & Eggs"]]),
+  R("Poached Eggs on Toast","Breakfast",10,["Egg"],["Healthy"],[["Eggs",4,"","Dairy & Eggs"],["Sourdough bread",4,"slices","Bakery & Grains"],["Butter",1,"tbsp","Dairy & Eggs"],["Chives",1,"tbsp","Produce"]]),
+  R("Cheesy Grits","Breakfast",25,["Extra Cheesy"],[],[["Grits",1.5,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Butter",2,"tbsp","Dairy & Eggs"]]),
+  R("Prawns and Grits","Breakfast",30,["Seafood","Shellfish","Spicy"],[],[["Prawns",400,"g","Meat & Seafood"],["Grits",1.5,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Cajun seasoning",1,"tbsp","Pantry"]]),
+  R("Breakfast Nachos","Breakfast",20,["Egg","Spicy","Extra Cheesy"],[],[["Tortilla chips",1,"bag","Pantry"],["Eggs",4,"","Dairy & Eggs"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Salsa",0.5,"cup","Pantry"],["Black beans",1,"tin","Pantry"]]),
+  R("Sausage & Egg Muffin Cups","Breakfast",25,["Egg","Red Meat","Pork"],["Kid-Friendly"],[["Sausages",6,"","Meat & Seafood"],["Eggs",8,"","Dairy & Eggs"],["Cheddar cheese",60,"g","Dairy & Eggs"],["Capsicum",1,"","Produce"]]),
+  R("Whole Grain Waffle Sandwich","Breakfast",15,["Egg","Extra Cheesy"],["Kid-Friendly"],[["Wholegrain waffles",4,"","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Ham",100,"g","Meat & Seafood"],["Cheddar cheese",60,"g","Dairy & Eggs"]]),
+  R("Banana Bread French Toast","Breakfast",20,["Egg"],["Kid-Friendly"],[["Banana bread",6,"slices","Bakery & Grains"],["Eggs",3,"","Dairy & Eggs"],["Milk",0.5,"cup","Dairy & Eggs"],["Maple syrup",0.5,"cup","Pantry"]]),
+  R("Chocolate Chip Pancakes","Breakfast",20,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1.5,"cup","Dairy & Eggs"],["Chocolate chips",0.5,"cup","Pantry"],["Maple syrup",0.5,"cup","Pantry"]]),
+  R("Cornbread Muffins","Breakfast",25,["Egg"],["Kid-Friendly"],[["Cornmeal",1.5,"cup","Pantry"],["Flour",0.5,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Honey",3,"tbsp","Pantry"]]),
+  R("Ricotta Toast with Honey","Breakfast",8,["Extra Cheesy"],["Healthy"],[["Sourdough bread",4,"slices","Bakery & Grains"],["Ricotta cheese",200,"g","Dairy & Eggs"],["Honey",3,"tbsp","Pantry"],["Mixed berries",1,"cup","Produce"]]),
+  R("Muesli with Fresh Fruit","Breakfast",8,[],["Healthy"],[["Muesli",3,"cup","Pantry"],["Milk",2,"cup","Dairy & Eggs"],["Apple",1,"","Produce"],["Banana",1,"","Produce"],["Mixed berries",1,"cup","Produce"]]),
+  R("Vegemite Toast","Breakfast",3,[],["Kid-Friendly","Healthy"],[["Bread",4,"slices","Bakery & Grains"],["Butter",2,"tbsp","Dairy & Eggs"],["Vegemite",2,"tbsp","Pantry"]]),
+  R("Baked Beans on Toast","Breakfast",8,[],["Healthy","Kid-Friendly"],[["Baked beans (tinned)",2,"tins","Pantry"],["Bread",4,"slices","Bakery & Grains"],["Butter",2,"tbsp","Dairy & Eggs"]]),
+
+  /* ---------- Lunch (25) ---------- */
+  R("Grilled Cheese & Tomato Soup","Lunch",20,["Extra Cheesy"],["Kid-Friendly"],[["Sourdough bread",4,"slices","Bakery & Grains"],["Cheddar cheese",120,"g","Dairy & Eggs"],["Butter",2,"tbsp","Dairy & Eggs"],["Tomato soup (tinned)",2,"tins","Pantry"],["Basil",1,"handful","Produce"]]),
+  R("Chicken Caesar Wrap","Lunch",15,[],[],[["Chicken breast",400,"g","Meat & Seafood"],["Romaine lettuce",1,"head","Produce"],["Caesar dressing",0.5,"cup","Pantry"],["Parmesan",40,"g","Dairy & Eggs"],["Tortilla wraps",4,"","Bakery & Grains"]]),
+  R("Greek Salad & Grilled Chicken","Lunch",25,["Olives"],["Healthy"],[["Chicken breast",400,"g","Meat & Seafood"],["Cucumber",1,"","Produce"],["Tomato",3,"","Produce"],["Feta cheese",100,"g","Dairy & Eggs"],["Kalamata olives",0.5,"cup","Pantry"],["Red onion",1,"","Produce"]]),
+  R("Turkey & Cheese Sandwich","Lunch",8,["Extra Cheesy"],["Kid-Friendly"],[["Wholegrain bread",4,"slices","Bakery & Grains"],["Turkey slices",200,"g","Meat & Seafood"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Lettuce",1,"head","Produce"]]),
+  R("Quinoa Buddha Bowl","Lunch",25,[],["Healthy"],[["Quinoa",1.5,"cup","Pantry"],["Chickpeas",1,"tin","Pantry"],["Avocado",1,"","Produce"],["Cucumber",1,"","Produce"],["Cherry tomatoes",1,"cup","Produce"]]),
+  R("Chicken Noodle Soup","Lunch",35,[],["Healthy"],[["Chicken breast",300,"g","Meat & Seafood"],["Egg noodles",200,"g","Bakery & Grains"],["Carrot",2,"","Produce"],["Celery",2,"stalks","Produce"],["Chicken stock",1.5,"l","Pantry"]]),
+  R("Tuna Salad Sandwich","Lunch",12,["Seafood"],[],[["Tinned tuna",2,"tins","Meat & Seafood"],["Wholegrain bread",4,"slices","Bakery & Grains"],["Mayonnaise",3,"tbsp","Pantry"],["Celery",1,"stalk","Produce"]]),
+  R("Veggie Pita Pockets","Lunch",15,[],["Healthy"],[["Pita bread",4,"","Bakery & Grains"],["Hummus",0.75,"cup","Pantry"],["Cucumber",1,"","Produce"],["Capsicum",1,"","Produce"],["Baby spinach",1,"cup","Produce"]]),
+  R("Caprese Sandwich","Lunch",10,["Extra Cheesy"],["Healthy"],[["Ciabatta bread",4,"","Bakery & Grains"],["Mozzarella",150,"g","Dairy & Eggs"],["Tomato",2,"","Produce"],["Basil",1,"handful","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Chicken Fried Rice","Lunch",25,[],[],[["Chicken breast",300,"g","Meat & Seafood"],["Cooked rice",3,"cup","Bakery & Grains"],["Eggs",2,"","Dairy & Eggs"],["Frozen peas",1,"cup","Produce"],["Soy sauce",3,"tbsp","Pantry"]]),
+  R("Mini Pizza Bagels","Lunch",15,["Extra Cheesy"],["Kid-Friendly"],[["Bagels",4,"","Bakery & Grains"],["Tomato passata",0.5,"cup","Pantry"],["Mozzarella",150,"g","Dairy & Eggs"],["Pepperoni",60,"g","Meat & Seafood"]]),
+  R("Lentil Soup","Lunch",35,[],["Healthy"],[["Red lentils",1.5,"cup","Pantry"],["Carrot",2,"","Produce"],["Onion",1,"","Produce"],["Vegetable stock",1.5,"l","Pantry"],["Cumin",1,"tsp","Pantry"]]),
+  R("BLT Wrap","Lunch",15,[],[],[["Bacon",8,"slices","Meat & Seafood"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"],["Tortilla wraps",4,"","Bakery & Grains"],["Mayonnaise",2,"tbsp","Pantry"]]),
+  R("Egg Salad Sandwich","Lunch",15,["Egg"],["Kid-Friendly"],[["Eggs",6,"","Dairy & Eggs"],["Wholegrain bread",4,"slices","Bakery & Grains"],["Mayonnaise",3,"tbsp","Pantry"],["Chives",1,"tbsp","Produce"]]),
+  R("Falafel Bowl","Lunch",25,[],["Healthy"],[["Falafel",12,"pieces","Other"],["Pita bread",4,"","Bakery & Grains"],["Hummus",0.5,"cup","Pantry"],["Cucumber",1,"","Produce"],["Tomato",2,"","Produce"]]),
+  R("Ham & Cheese Roll-Ups","Lunch",10,["Extra Cheesy"],["Kid-Friendly"],[["Tortilla wraps",4,"","Bakery & Grains"],["Ham",200,"g","Meat & Seafood"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Cream cheese",4,"tbsp","Dairy & Eggs"]]),
+  R("Cobb Salad","Lunch",25,["Egg"],["Healthy"],[["Chicken breast",300,"g","Meat & Seafood"],["Eggs",3,"","Dairy & Eggs"],["Bacon",4,"slices","Meat & Seafood"],["Avocado",1,"","Produce"],["Romaine lettuce",1,"head","Produce"]]),
+  R("Peanut Butter & Banana Sandwich","Lunch",6,[],["Kid-Friendly"],[["Wholegrain bread",4,"slices","Bakery & Grains"],["Peanut butter",4,"tbsp","Pantry"],["Banana",2,"","Produce"]]),
+  R("Veggie Sushi Rolls","Lunch",30,[],["Healthy"],[["Sushi rice",2,"cup","Bakery & Grains"],["Nori sheets",6,"","Other"],["Cucumber",1,"","Produce"],["Avocado",1,"","Produce"],["Carrot",1,"","Produce"]]),
+  R("Chicken Quesadillas","Lunch",20,["Extra Cheesy"],["Kid-Friendly"],[["Chicken breast",300,"g","Meat & Seafood"],["Tortilla wraps",4,"","Bakery & Grains"],["Cheddar cheese",150,"g","Dairy & Eggs"],["Capsicum",1,"","Produce"]]),
+  R("Soba Noodle Salad","Lunch",20,[],["Healthy"],[["Soba noodles",250,"g","Bakery & Grains"],["Cucumber",1,"","Produce"],["Carrot",1,"","Produce"],["Edamame",1,"cup","Produce"],["Soy sauce",2,"tbsp","Pantry"]]),
+  R("Minestrone Soup","Lunch",35,[],["Healthy"],[["Kidney beans",1,"tin","Pantry"],["Carrot",2,"","Produce"],["Celery",2,"stalks","Produce"],["Pasta",1,"cup","Bakery & Grains"],["Tomato passata",500,"ml","Pantry"]]),
+  R("Turkey Chilli","Lunch",35,["Red Meat","Spicy"],["Healthy"],[["Turkey mince",500,"g","Meat & Seafood"],["Kidney beans",1,"tin","Pantry"],["Tomato passata",500,"ml","Pantry"],["Onion",1,"","Produce"],["Chilli powder",1,"tbsp","Pantry"]]),
+  R("Chicken Pesto Pasta Salad","Lunch",20,["Extra Cheesy"],[],[["Pasta",300,"g","Bakery & Grains"],["Chicken breast",300,"g","Meat & Seafood"],["Pesto",0.5,"cup","Pantry"],["Cherry tomatoes",1,"cup","Produce"],["Parmesan",40,"g","Dairy & Eggs"]]),
+  R("Veggie Wrap","Lunch",12,[],["Healthy"],[["Tortilla wraps",4,"","Bakery & Grains"],["Hummus",0.5,"cup","Pantry"],["Capsicum",1,"","Produce"],["Spinach",1,"cup","Produce"],["Carrot",1,"","Produce"]]),
+  R("Club Sandwich","Lunch",15,["Red Meat","Bacon"],[],[["Bread",6,"slices","Bakery & Grains"],["Turkey slices",200,"g","Meat & Seafood"],["Bacon",6,"slices","Meat & Seafood"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"]]),
+  R("Philly Cheesesteak","Lunch",25,["Red Meat","Beef","Extra Cheesy"],[],[["Beef strips",400,"g","Meat & Seafood"],["Capsicum",1,"","Produce"],["Onion",1,"","Produce"],["Provolone cheese",150,"g","Dairy & Eggs"],["Hoagie rolls",4,"","Bakery & Grains"]]),
+  R("Chicken Shawarma Wrap","Lunch",25,["Spicy","Chicken"],[],[["Chicken thigh",500,"g","Meat & Seafood"],["Pita bread",4,"","Bakery & Grains"],["Cucumber",1,"","Produce"],["Tomato",2,"","Produce"],["Garlic yogurt sauce",0.5,"cup","Pantry"]]),
+  R("Beef Burrito Bowl","Lunch",25,["Red Meat","Beef","Spicy"],[],[["Beef mince",500,"g","Meat & Seafood"],["Cooked rice",3,"cup","Bakery & Grains"],["Black beans",1,"tin","Pantry"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Salsa",0.5,"cup","Pantry"]]),
+  R("Salmon Sushi Bowl","Lunch",25,["Seafood","Fish"],["Healthy"],[["Sushi rice",2,"cup","Bakery & Grains"],["Salmon",300,"g","Meat & Seafood"],["Avocado",1,"","Produce"],["Cucumber",1,"","Produce"],["Nori sheets",4,"","Other"]]),
+  R("Panzanella Salad","Lunch",20,["Tomatoes","Onions"],["Healthy"],[["Ciabatta bread",4,"","Bakery & Grains"],["Tomato",4,"","Produce"],["Cucumber",1,"","Produce"],["Red onion",1,"","Produce"],["Olive oil",3,"tbsp","Pantry"]]),
+  R("Waldorf Salad","Lunch",15,["Nuts"],["Healthy"],[["Apple",3,"","Produce"],["Celery",3,"stalks","Produce"],["Walnuts",0.5,"cup","Pantry"],["Grapes",1,"cup","Produce"],["Mayonnaise",3,"tbsp","Pantry"]]),
+  R("Caprese Pasta Salad","Lunch",20,["Extra Cheesy","Tomatoes"],["Healthy"],[["Pasta",300,"g","Bakery & Grains"],["Mozzarella",200,"g","Dairy & Eggs"],["Cherry tomatoes",2,"cup","Produce"],["Basil",1,"handful","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Chicken Salad Sandwich","Lunch",15,["Chicken"],[],[["Chicken breast",400,"g","Meat & Seafood"],["Wholegrain bread",4,"slices","Bakery & Grains"],["Mayonnaise",3,"tbsp","Pantry"],["Celery",1,"stalk","Produce"],["Grapes",0.5,"cup","Produce"]]),
+  R("Ham & Swiss Panini","Lunch",12,["Extra Cheesy"],[],[["Ciabatta bread",4,"","Bakery & Grains"],["Ham",200,"g","Meat & Seafood"],["Swiss cheese",150,"g","Dairy & Eggs"],["Butter",2,"tbsp","Dairy & Eggs"]]),
+  R("Vegetable Spring Rolls","Lunch",25,[],["Healthy"],[["Rice paper",8,"","Other"],["Carrot",2,"","Produce"],["Cucumber",1,"","Produce"],["Lettuce",1,"head","Produce"],["Rice vermicelli",100,"g","Bakery & Grains"]]),
+  R("Pad Thai","Lunch",30,["Peanuts","Egg","Shellfish"],[],[["Rice noodles",300,"g","Bakery & Grains"],["Prawns",300,"g","Meat & Seafood"],["Eggs",2,"","Dairy & Eggs"],["Bean sprouts",2,"cup","Produce"],["Peanuts",0.5,"cup","Pantry"]]),
+  R("Bibimbap Bowl","Lunch",30,["Egg","Spicy","Beef","Spinach"],["Healthy"],[["Cooked rice",3,"cup","Bakery & Grains"],["Beef strips",300,"g","Meat & Seafood"],["Spinach",1,"cup","Produce"],["Carrot",1,"","Produce"],["Eggs",4,"","Dairy & Eggs"]]),
+  R("Banh Mi Sandwich","Lunch",20,["Red Meat","Pork","Spicy","Coriander"],[],[["Baguette",4,"","Bakery & Grains"],["Pork",400,"g","Meat & Seafood"],["Carrot",1,"","Produce"],["Cucumber",1,"","Produce"],["Coriander",1,"bunch","Produce"]]),
+  R("Prawns Poke Bowl","Lunch",20,["Seafood","Shellfish"],["Healthy"],[["Cooked rice",3,"cup","Bakery & Grains"],["Prawns",400,"g","Meat & Seafood"],["Avocado",1,"","Produce"],["Cucumber",1,"","Produce"],["Soy sauce",3,"tbsp","Pantry"]]),
+  R("Turkey Club Wrap","Lunch",15,["Bacon"],[],[["Tortilla wraps",4,"","Bakery & Grains"],["Turkey slices",200,"g","Meat & Seafood"],["Bacon",6,"slices","Meat & Seafood"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"]]),
+  R("Meatball Sub","Lunch",30,["Red Meat","Beef","Extra Cheesy"],["Kid-Friendly"],[["Beef meatballs",12,"","Meat & Seafood"],["Sub rolls",4,"","Bakery & Grains"],["Tomato passata",500,"ml","Pantry"],["Mozzarella",150,"g","Dairy & Eggs"]]),
+  R("Reuben Sandwich","Lunch",15,["Red Meat","Beef","Extra Cheesy"],[],[["Rye bread",8,"slices","Bakery & Grains"],["Corned beef",400,"g","Meat & Seafood"],["Sauerkraut",1,"cup","Pantry"],["Swiss cheese",150,"g","Dairy & Eggs"]]),
+  R("Chicken Tikka Wrap","Lunch",25,["Spicy","Chicken"],[],[["Chicken breast",400,"g","Meat & Seafood"],["Tortilla wraps",4,"","Bakery & Grains"],["Yogurt",0.5,"cup","Dairy & Eggs"],["Lettuce",1,"head","Produce"],["Curry powder",2,"tbsp","Pantry"]]),
+  R("Falafel Pita","Lunch",20,[],["Healthy"],[["Falafel",12,"pieces","Other"],["Pita bread",4,"","Bakery & Grains"],["Hummus",0.5,"cup","Pantry"],["Cucumber",1,"","Produce"],["Tomato",2,"","Produce"]]),
+  R("Greek Chicken Bowl","Lunch",25,["Chicken","Olives"],["Healthy"],[["Chicken breast",400,"g","Meat & Seafood"],["Cooked rice",2,"cup","Bakery & Grains"],["Cucumber",1,"","Produce"],["Feta cheese",80,"g","Dairy & Eggs"],["Kalamata olives",0.5,"cup","Pantry"]]),
+  R("Grilled Veggie Sandwich","Lunch",20,["Extra Cheesy"],["Healthy"],[["Ciabatta bread",4,"","Bakery & Grains"],["Zucchini",1,"","Produce"],["Capsicum",1,"","Produce"],["Mozzarella",150,"g","Dairy & Eggs"],["Pesto",3,"tbsp","Pantry"]]),
+  R("Spinach & Strawberry Salad","Lunch",12,["Nuts","Spinach"],["Healthy"],[["Spinach",3,"cup","Produce"],["Strawberries",2,"cup","Produce"],["Feta cheese",60,"g","Dairy & Eggs"],["Almonds",0.25,"cup","Pantry"],["Balsamic vinegar",2,"tbsp","Pantry"]]),
+  R("Chicken Caesar Pasta Salad","Lunch",20,["Chicken","Extra Cheesy"],[],[["Pasta",300,"g","Bakery & Grains"],["Chicken breast",300,"g","Meat & Seafood"],["Caesar dressing",0.5,"cup","Pantry"],["Parmesan",40,"g","Dairy & Eggs"],["Romaine lettuce",1,"head","Produce"]]),
+  R("Buffalo Chicken Wrap","Lunch",20,["Spicy","Chicken"],[],[["Chicken breast",400,"g","Meat & Seafood"],["Tortilla wraps",4,"","Bakery & Grains"],["Buffalo sauce",0.5,"cup","Pantry"],["Lettuce",1,"head","Produce"],["Ranch dressing",0.25,"cup","Pantry"]]),
+  R("BBQ Chicken Sandwich","Lunch",20,["Chicken"],["Kid-Friendly"],[["Chicken breast",400,"g","Meat & Seafood"],["Burger buns",4,"","Bakery & Grains"],["BBQ sauce",0.5,"cup","Pantry"],["Coleslaw mix",2,"cup","Produce"]]),
+  R("Tuna Poke Bowl","Lunch",20,["Seafood","Fish"],["Healthy"],[["Cooked rice",3,"cup","Bakery & Grains"],["Tuna",400,"g","Meat & Seafood"],["Avocado",1,"","Produce"],["Cucumber",1,"","Produce"],["Soy sauce",3,"tbsp","Pantry"]]),
+  R("Roast Beef Sandwich","Lunch",10,["Red Meat","Beef"],[],[["Wholegrain bread",4,"slices","Bakery & Grains"],["Roast beef",300,"g","Meat & Seafood"],["Horseradish",2,"tbsp","Pantry"],["Lettuce",1,"head","Produce"]]),
+  R("Veggie Burger","Lunch",20,["Avocado"],["Healthy"],[["Veggie patties",4,"","Other"],["Burger buns",4,"","Bakery & Grains"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"],["Avocado",1,"","Produce"]]),
+  R("Black Bean Burger","Lunch",25,["Beans","Extra Cheesy"],["Healthy"],[["Black beans",2,"tins","Pantry"],["Burger buns",4,"","Bakery & Grains"],["Breadcrumbs",0.5,"cup","Pantry"],["Cheddar cheese",80,"g","Dairy & Eggs"]]),
+  R("Chicken Gyro","Lunch",25,["Chicken"],[],[["Chicken thigh",500,"g","Meat & Seafood"],["Pita bread",4,"","Bakery & Grains"],["Tzatziki sauce",0.5,"cup","Pantry"],["Tomato",2,"","Produce"],["Red onion",1,"","Produce"]]),
+  R("Loaded Baked Potato","Lunch",50,["Extra Cheesy","Bacon"],[],[["Potatoes",4,"","Produce"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Bacon",6,"slices","Meat & Seafood"],["Sour cream",0.5,"cup","Dairy & Eggs"],["Chives",2,"tbsp","Produce"]]),
+  R("Broccoli Cheddar Soup","Lunch",30,["Broccoli","Extra Cheesy"],[],[["Broccoli",3,"cup","Produce"],["Cheddar cheese",200,"g","Dairy & Eggs"],["Onion",1,"","Produce"],["Vegetable stock",1,"l","Pantry"],["Milk",1,"cup","Dairy & Eggs"]]),
+  R("Tomato Basil Soup","Lunch",30,["Tomatoes"],["Healthy"],[["Tomato passata",1,"l","Pantry"],["Basil",1,"handful","Produce"],["Onion",1,"","Produce"],["Garlic",2,"cloves","Produce"],["Cream",0.5,"cup","Dairy & Eggs"]]),
+  R("Butternut Squash Soup","Lunch",40,[],["Healthy"],[["Butternut squash",1,"","Produce"],["Onion",1,"","Produce"],["Vegetable stock",1,"l","Pantry"],["Cream",0.5,"cup","Dairy & Eggs"],["Nutmeg",0.5,"tsp","Pantry"]]),
+  R("Split Pea Soup","Lunch",45,["Peas","Pork"],["Healthy"],[["Split peas",2,"cup","Pantry"],["Ham hock",1,"","Meat & Seafood"],["Carrot",2,"","Produce"],["Onion",1,"","Produce"],["Vegetable stock",1.5,"l","Pantry"]]),
+  R("Chicken Tortilla Soup","Lunch",35,["Chicken","Spicy"],[],[["Chicken breast",400,"g","Meat & Seafood"],["Black beans",1,"tin","Pantry"],["Corn",1,"cup","Produce"],["Tortilla chips",2,"cup","Pantry"],["Chicken stock",1.5,"l","Pantry"]]),
+  R("Beef & Barley Soup","Lunch",50,["Red Meat","Beef"],["Healthy"],[["Beef chuck",500,"g","Meat & Seafood"],["Barley",1,"cup","Pantry"],["Carrot",2,"","Produce"],["Celery",2,"stalks","Produce"],["Beef stock",1.5,"l","Pantry"]]),
+  R("Egg Fried Rice with Veggies","Lunch",15,["Egg","Peas"],[],[["Cooked rice",3,"cup","Bakery & Grains"],["Eggs",3,"","Dairy & Eggs"],["Frozen peas",1,"cup","Produce"],["Carrot",1,"","Produce"],["Soy sauce",3,"tbsp","Pantry"]]),
+  R("Vietnamese Noodle Salad","Lunch",20,["Peanuts"],["Healthy"],[["Rice vermicelli",250,"g","Bakery & Grains"],["Carrot",1,"","Produce"],["Cucumber",1,"","Produce"],["Peanuts",0.25,"cup","Pantry"],["Soy sauce",2,"tbsp","Pantry"]]),
+  R("Mediterranean Couscous Salad","Lunch",15,["Tomatoes","Olives"],["Healthy"],[["Couscous",1.5,"cup","Bakery & Grains"],["Cherry tomatoes",1,"cup","Produce"],["Kalamata olives",0.5,"cup","Pantry"],["Feta cheese",80,"g","Dairy & Eggs"],["Cucumber",1,"","Produce"]]),
+  R("Antipasto Salad","Lunch",15,["Olives","Extra Cheesy","Pork"],[],[["Salami",150,"g","Meat & Seafood"],["Mozzarella",150,"g","Dairy & Eggs"],["Kalamata olives",0.5,"cup","Pantry"],["Cherry tomatoes",1,"cup","Produce"],["Romaine lettuce",1,"head","Produce"]]),
+  R("Chicken Avocado Wrap","Lunch",15,["Chicken","Avocado"],["Healthy"],[["Chicken breast",400,"g","Meat & Seafood"],["Tortilla wraps",4,"","Bakery & Grains"],["Avocado",1,"","Produce"],["Lettuce",1,"head","Produce"],["Ranch dressing",0.25,"cup","Pantry"]]),
+  R("Smoked Salmon Bagel","Lunch",8,["Seafood","Fish"],[],[["Bagels",4,"","Bakery & Grains"],["Smoked salmon",200,"g","Meat & Seafood"],["Cream cheese",6,"tbsp","Dairy & Eggs"],["Cucumber",1,"","Produce"],["Dill",1,"tbsp","Produce"]]),
+  R("Croque Monsieur","Lunch",15,["Extra Cheesy","Pork"],[],[["White bread",8,"slices","Bakery & Grains"],["Ham",200,"g","Meat & Seafood"],["Gruyere cheese",150,"g","Dairy & Eggs"],["Butter",3,"tbsp","Dairy & Eggs"],["Flour",2,"tbsp","Pantry"]]),
+  R("Grilled Chicken Pita","Lunch",20,["Chicken"],["Healthy"],[["Chicken breast",400,"g","Meat & Seafood"],["Pita bread",4,"","Bakery & Grains"],["Hummus",0.5,"cup","Pantry"],["Cucumber",1,"","Produce"],["Tomato",2,"","Produce"]]),
+  R("Rainbow Veggie Wrap","Lunch",12,[],["Healthy"],[["Tortilla wraps",4,"","Bakery & Grains"],["Capsicum",1,"","Produce"],["Carrot",1,"","Produce"],["Cabbage",1,"cup","Produce"],["Hummus",0.5,"cup","Pantry"]]),
+  R("Turkey Meatball Soup","Lunch",35,[],["Healthy"],[["Turkey mince",500,"g","Meat & Seafood"],["Chicken stock",1.5,"l","Pantry"],["Carrot",2,"","Produce"],["Celery",2,"stalks","Produce"],["Pasta",1,"cup","Bakery & Grains"]]),
+  R("Pulled Pork Sandwich","Lunch",45,["Red Meat","Pork"],[],[["Pork shoulder",1,"kg","Meat & Seafood"],["Burger buns",4,"","Bakery & Grains"],["BBQ sauce",1,"cup","Pantry"],["Coleslaw mix",2,"cup","Produce"]]),
+  R("Beef Noodle Soup","Lunch",40,["Red Meat","Beef"],[],[["Beef strips",400,"g","Meat & Seafood"],["Egg noodles",300,"g","Bakery & Grains"],["Beef stock",1.5,"l","Pantry"],["Bok choy",2,"cup","Produce"],["Spring onion",2,"","Produce"]]),
+  R("Chicken, Rice & Veggie Bowl","Lunch",25,["Chicken"],["Healthy","Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Jasmine rice",2,"cup","Bakery & Grains"],["Broccoli",1,"head","Produce"],["Carrot",2,"","Produce"],["Soy sauce",2,"tbsp","Pantry"]]),
+  R("Honey Soy Chicken Rice Bowl","Lunch",20,["Chicken"],["Healthy","Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Jasmine rice",2,"cup","Bakery & Grains"],["Honey",3,"tbsp","Pantry"],["Soy sauce",3,"tbsp","Pantry"],["Broccoli",1,"head","Produce"]]),
+  R("Lemon Pepper Chicken with Rice","Lunch",25,["Chicken"],["Healthy"],[["Chicken breast",500,"g","Meat & Seafood"],["Jasmine rice",2,"cup","Bakery & Grains"],["Lemon",2,"","Produce"],["Black pepper",1,"tsp","Pantry"],["Green beans",2,"cup","Produce"]]),
+  R("Meal Prep Chicken & Veg","Lunch",25,["Chicken"],["Healthy","Kid-Friendly"],[["Chicken breast",600,"g","Meat & Seafood"],["Sweet potato",2,"","Produce"],["Broccoli",1,"head","Produce"],["Carrot",2,"","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Chicken Veggie Stir-Fry Rice Bowl","Lunch",20,["Chicken"],["Healthy"],[["Chicken breast",500,"g","Meat & Seafood"],["Jasmine rice",2,"cup","Bakery & Grains"],["Capsicum",1,"","Produce"],["Broccoli",1,"head","Produce"],["Soy sauce",3,"tbsp","Pantry"]]),
+  R("Simple Grilled Chicken Salad","Lunch",20,["Chicken"],["Healthy"],[["Chicken breast",400,"g","Meat & Seafood"],["Lettuce",1,"head","Produce"],["Cucumber",1,"","Produce"],["Tomato",2,"","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Cheese Toastie","Lunch",8,["Extra Cheesy"],["Kid-Friendly"],[["Bread",4,"slices","Bakery & Grains"],["Cheddar cheese",150,"g","Dairy & Eggs"],["Butter",2,"tbsp","Dairy & Eggs"]]),
+  R("Sausage Rolls","Lunch",35,["Red Meat","Pork","Onions","Egg"],["Kid-Friendly"],[["Pork mince",500,"g","Meat & Seafood"],["Puff pastry",3,"sheets","Bakery & Grains"],["Onion",1,"","Produce"],["Breadcrumbs",0.5,"cup","Pantry"],["Eggs",1,"","Dairy & Eggs"]]),
+  R("Zucchini Slice","Lunch",45,["Egg","Extra Cheesy","Bacon","Onions"],["Kid-Friendly"],[["Zucchini",3,"","Produce"],["Eggs",6,"","Dairy & Eggs"],["Bacon",150,"g","Meat & Seafood"],["Self-raising flour",1,"cup","Pantry"],["Cheddar cheese",150,"g","Dairy & Eggs"],["Onion",1,"","Produce"]]),
+  R("Quiche Lorraine","Lunch",50,["Egg","Extra Cheesy","Pork","Bacon","Onions"],[],[["Shortcrust pastry",1,"sheet","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Cream",1,"cup","Dairy & Eggs"],["Bacon",150,"g","Meat & Seafood"],["Gruyere cheese",100,"g","Dairy & Eggs"],["Onion",1,"","Produce"]]),
+
+  /* ---------- Dinner (25) ---------- */
+  R("Mushroom Risotto","Dinner",45,["Mushrooms","Onions"],[],[["Arborio rice",1.5,"cup","Pantry"],["Mushrooms",300,"g","Produce"],["Vegetable stock",1,"l","Pantry"],["Parmesan",60,"g","Dairy & Eggs"],["Onion",1,"","Produce"],["White wine",0.5,"cup","Pantry"]]),
+  R("Baked Salmon & Veggies","Dinner",30,["Seafood"],["Healthy"],[["Salmon fillets",4,"","Meat & Seafood"],["Broccoli",2,"heads","Produce"],["Lemon",2,"","Produce"],["Olive oil",2,"tbsp","Pantry"],["Garlic",3,"cloves","Produce"]]),
+  R("Spaghetti Bolognese","Dinner",40,["Red Meat","Onions"],["Kid-Friendly"],[["Beef mince",500,"g","Meat & Seafood"],["Spaghetti",400,"g","Bakery & Grains"],["Tomato passata",700,"ml","Pantry"],["Onion",1,"","Produce"],["Garlic",2,"cloves","Produce"],["Carrot",2,"","Produce"]]),
+  R("Thai Green Curry","Dinner",35,["Spicy","Coriander"],[],[["Chicken thigh",500,"g","Meat & Seafood"],["Green curry paste",3,"tbsp","Pantry"],["Coconut milk",400,"ml","Pantry"],["Capsicum",2,"","Produce"],["Jasmine rice",2,"cup","Bakery & Grains"],["Coriander",1,"bunch","Produce"]]),
+  R("Taco Night","Dinner",25,["Red Meat","Extra Cheesy"],["Kid-Friendly"],[["Beef mince",500,"g","Meat & Seafood"],["Taco shells",10,"","Bakery & Grains"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"],["Sour cream",1,"cup","Dairy & Eggs"]]),
+  R("Veggie Tofu Stir-Fry","Dinner",20,[],["Healthy"],[["Firm tofu",400,"g","Other"],["Broccoli",1,"head","Produce"],["Capsicum",2,"","Produce"],["Soy sauce",3,"tbsp","Pantry"],["Ginger",1,"thumb","Produce"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Baked Chicken Tenders","Dinner",30,[],["Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Breadcrumbs",1.5,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Flour",0.5,"cup","Pantry"],["Paprika",1,"tsp","Pantry"]]),
+  R("One-Pan Lemon Chicken & Veggies","Dinner",40,[],["Healthy"],[["Chicken thigh",600,"g","Meat & Seafood"],["Potatoes",4,"","Produce"],["Lemon",2,"","Produce"],["Green beans",2,"cup","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Turkey Meatballs & Zoodles","Dinner",35,[],["Healthy"],[["Turkey mince",500,"g","Meat & Seafood"],["Zucchini",4,"","Produce"],["Tomato passata",500,"ml","Pantry"],["Parmesan",40,"g","Dairy & Eggs"],["Garlic",2,"cloves","Produce"]]),
+  R("Fish Tacos","Dinner",25,["Seafood","Spicy"],[],[["White fish fillets",500,"g","Meat & Seafood"],["Taco shells",10,"","Bakery & Grains"],["Cabbage",2,"cup","Produce"],["Lime",2,"","Produce"],["Sour cream",0.5,"cup","Dairy & Eggs"]]),
+  R("Veggie Lasagna","Dinner",55,["Extra Cheesy"],["Healthy"],[["Lasagna sheets",12,"","Bakery & Grains"],["Zucchini",2,"","Produce"],["Spinach",2,"cup","Produce"],["Ricotta cheese",500,"g","Dairy & Eggs"],["Tomato passata",700,"ml","Pantry"]]),
+  R("BBQ Pulled Pork Sliders","Dinner",50,["Red Meat"],["Kid-Friendly"],[["Pork shoulder",1,"kg","Meat & Seafood"],["Slider buns",12,"","Bakery & Grains"],["BBQ sauce",1,"cup","Pantry"],["Coleslaw mix",2,"cup","Produce"]]),
+  R("Shepherd's Pie","Dinner",50,["Red Meat","Onions"],["Kid-Friendly"],[["Beef mince",500,"g","Meat & Seafood"],["Potatoes",5,"","Produce"],["Carrot",2,"","Produce"],["Frozen peas",1,"cup","Produce"],["Onion",1,"","Produce"]]),
+  R("Chicken Fajitas","Dinner",25,["Spicy","Onions"],[],[["Chicken breast",500,"g","Meat & Seafood"],["Capsicum",3,"","Produce"],["Onion",1,"","Produce"],["Tortilla wraps",8,"","Bakery & Grains"],["Fajita seasoning",2,"tbsp","Pantry"]]),
+  R("Beef & Broccoli Stir-Fry","Dinner",25,["Red Meat"],[],[["Beef strips",500,"g","Meat & Seafood"],["Broccoli",2,"heads","Produce"],["Soy sauce",3,"tbsp","Pantry"],["Garlic",2,"cloves","Produce"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Margherita Pizza","Dinner",30,["Extra Cheesy"],["Kid-Friendly"],[["Pizza dough",2,"","Bakery & Grains"],["Tomato passata",0.5,"cup","Pantry"],["Mozzarella",250,"g","Dairy & Eggs"],["Basil",1,"handful","Produce"]]),
+  R("Butter Chicken","Dinner",40,["Spicy"],[],[["Chicken thigh",600,"g","Meat & Seafood"],["Tomato passata",500,"ml","Pantry"],["Cream",0.5,"cup","Dairy & Eggs"],["Garam masala",2,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Vegetable Curry","Dinner",35,["Spicy"],["Healthy"],[["Chickpeas",1,"tin","Pantry"],["Sweet potato",2,"","Produce"],["Coconut milk",400,"ml","Pantry"],["Curry powder",2,"tbsp","Pantry"],["Spinach",2,"cup","Produce"]]),
+  R("Honey Garlic Salmon","Dinner",25,["Seafood"],["Healthy"],[["Salmon fillets",4,"","Meat & Seafood"],["Honey",3,"tbsp","Pantry"],["Garlic",3,"cloves","Produce"],["Soy sauce",2,"tbsp","Pantry"],["Broccoli",1,"head","Produce"]]),
+  R("Chicken Parmesan","Dinner",40,["Extra Cheesy"],["Kid-Friendly"],[["Chicken breast",4,"","Meat & Seafood"],["Breadcrumbs",1.5,"cup","Pantry"],["Mozzarella",200,"g","Dairy & Eggs"],["Tomato passata",500,"ml","Pantry"],["Spaghetti",300,"g","Bakery & Grains"]]),
+  R("Stuffed Capsicums","Dinner",45,[],["Healthy"],[["Capsicum",6,"","Produce"],["Cooked rice",2,"cup","Bakery & Grains"],["Beef mince",400,"g","Meat & Seafood"],["Onion",1,"","Produce"],["Cheddar cheese",80,"g","Dairy & Eggs"]]),
+  R("Teriyaki Chicken Bowls","Dinner",25,[],[],[["Chicken thigh",500,"g","Meat & Seafood"],["Jasmine rice",2,"cup","Bakery & Grains"],["Broccoli",1,"head","Produce"],["Teriyaki sauce",0.5,"cup","Pantry"],["Sesame seeds",1,"tbsp","Pantry"]]),
+  R("Baked Ziti","Dinner",45,["Extra Cheesy"],["Kid-Friendly"],[["Ziti pasta",400,"g","Bakery & Grains"],["Beef mince",400,"g","Meat & Seafood"],["Tomato passata",700,"ml","Pantry"],["Mozzarella",250,"g","Dairy & Eggs"],["Ricotta cheese",250,"g","Dairy & Eggs"]]),
+  R("Sheet Pan Sausage & Veggies","Dinner",35,["Red Meat"],["Healthy"],[["Sausages",6,"","Meat & Seafood"],["Potatoes",4,"","Produce"],["Capsicum",2,"","Produce"],["Zucchini",2,"","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Garlic Herb Roast Chicken","Dinner",60,[],["Healthy"],[["Whole chicken",1,"","Meat & Seafood"],["Potatoes",5,"","Produce"],["Garlic",6,"cloves","Produce"],["Rosemary",2,"sprigs","Produce"],["Lemon",1,"","Produce"]]),
+  R("Pork Chops with Applesauce","Dinner",30,["Pork"],[],[["Pork chops",4,"","Meat & Seafood"],["Apple",3,"","Produce"],["Butter",2,"tbsp","Dairy & Eggs"],["Cinnamon",1,"tsp","Pantry"],["Potatoes",4,"","Produce"]]),
+  R("Beef Wellington","Dinner",60,["Red Meat","Beef","Mushrooms"],[],[["Beef fillet",800,"g","Meat & Seafood"],["Puff pastry",1,"sheet","Bakery & Grains"],["Mushrooms",300,"g","Produce"],["Prosciutto",100,"g","Meat & Seafood"],["Dijon mustard",2,"tbsp","Pantry"]]),
+  R("Chicken Alfredo Pasta","Dinner",30,["Chicken","Extra Cheesy"],["Kid-Friendly"],[["Chicken breast",400,"g","Meat & Seafood"],["Fettuccine",400,"g","Bakery & Grains"],["Cream",1,"cup","Dairy & Eggs"],["Parmesan",80,"g","Dairy & Eggs"],["Garlic",2,"cloves","Produce"]]),
+  R("Beef Tacos","Dinner",25,["Red Meat","Beef","Spicy"],["Kid-Friendly"],[["Beef mince",500,"g","Meat & Seafood"],["Taco shells",10,"","Bakery & Grains"],["Cheddar cheese",100,"g","Dairy & Eggs"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"]]),
+  R("Pork Tenderloin with Roasted Veggies","Dinner",40,["Pork"],["Healthy"],[["Pork tenderloin",600,"g","Meat & Seafood"],["Carrot",3,"","Produce"],["Potatoes",4,"","Produce"],["Rosemary",2,"sprigs","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Lamb Chops with Mint Sauce","Dinner",30,["Red Meat"],[],[["Lamb chops",8,"","Meat & Seafood"],["Mint",1,"bunch","Produce"],["Yogurt",0.5,"cup","Dairy & Eggs"],["Garlic",2,"cloves","Produce"],["Potatoes",4,"","Produce"]]),
+  R("Chicken Tikka Masala","Dinner",40,["Chicken","Spicy"],[],[["Chicken breast",600,"g","Meat & Seafood"],["Tomato passata",500,"ml","Pantry"],["Cream",0.5,"cup","Dairy & Eggs"],["Garam masala",2,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Beef Enchiladas","Dinner",45,["Red Meat","Beef","Extra Cheesy","Spicy"],[],[["Beef mince",500,"g","Meat & Seafood"],["Tortilla wraps",8,"","Bakery & Grains"],["Enchilada sauce",500,"ml","Pantry"],["Cheddar cheese",150,"g","Dairy & Eggs"],["Onion",1,"","Produce"]]),
+  R("Prawns Scampi","Dinner",20,["Seafood","Shellfish","Garlic"],[],[["Prawns",500,"g","Meat & Seafood"],["Spaghetti",400,"g","Bakery & Grains"],["Garlic",4,"cloves","Produce"],["Butter",3,"tbsp","Dairy & Eggs"],["Lemon",1,"","Produce"]]),
+  R("Lobster Mac and Cheese","Dinner",40,["Seafood","Shellfish","Extra Cheesy"],[],[["Lobster meat",300,"g","Meat & Seafood"],["Macaroni",400,"g","Bakery & Grains"],["Cheddar cheese",200,"g","Dairy & Eggs"],["Milk",2,"cup","Dairy & Eggs"],["Butter",3,"tbsp","Dairy & Eggs"]]),
+  R("Pesto Chicken Pasta","Dinner",25,["Chicken","Extra Cheesy"],[],[["Chicken breast",400,"g","Meat & Seafood"],["Pasta",400,"g","Bakery & Grains"],["Pesto",0.75,"cup","Pantry"],["Cherry tomatoes",1,"cup","Produce"],["Parmesan",40,"g","Dairy & Eggs"]]),
+  R("Chicken Cacciatore","Dinner",45,["Chicken","Onions","Mushrooms"],["Healthy"],[["Chicken thigh",600,"g","Meat & Seafood"],["Tomato passata",500,"ml","Pantry"],["Capsicum",2,"","Produce"],["Onion",1,"","Produce"],["Mushrooms",200,"g","Produce"]]),
+  R("Beef Stroganoff","Dinner",35,["Red Meat","Beef","Mushrooms"],[],[["Beef strips",500,"g","Meat & Seafood"],["Mushrooms",250,"g","Produce"],["Sour cream",1,"cup","Dairy & Eggs"],["Egg noodles",400,"g","Bakery & Grains"],["Onion",1,"","Produce"]]),
+  R("Pork Stir-Fry","Dinner",20,["Pork"],["Healthy"],[["Pork strips",400,"g","Meat & Seafood"],["Broccoli",1,"head","Produce"],["Capsicum",1,"","Produce"],["Soy sauce",3,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Chicken Marsala","Dinner",35,["Chicken","Mushrooms"],[],[["Chicken breast",4,"","Meat & Seafood"],["Mushrooms",250,"g","Produce"],["Marsala wine",0.5,"cup","Pantry"],["Butter",3,"tbsp","Dairy & Eggs"],["Flour",0.25,"cup","Pantry"]]),
+  R("Cajun Prawns Pasta","Dinner",25,["Seafood","Shellfish","Spicy"],[],[["Prawns",500,"g","Meat & Seafood"],["Penne pasta",400,"g","Bakery & Grains"],["Cajun seasoning",2,"tbsp","Pantry"],["Cream",0.5,"cup","Dairy & Eggs"],["Capsicum",1,"","Produce"]]),
+  R("Beef Kebabs","Dinner",25,["Red Meat","Beef","Onions"],["Healthy"],[["Beef cubes",600,"g","Meat & Seafood"],["Capsicum",2,"","Produce"],["Red onion",1,"","Produce"],["Olive oil",2,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Chicken Souvlaki","Dinner",30,["Chicken"],["Healthy"],[["Chicken breast",500,"g","Meat & Seafood"],["Pita bread",4,"","Bakery & Grains"],["Tzatziki sauce",0.5,"cup","Pantry"],["Cherry tomatoes",1,"cup","Produce"],["Red onion",1,"","Produce"]]),
+  R("Moussaka","Dinner",60,["Red Meat","Beef","Extra Cheesy"],[],[["Eggplant",3,"","Produce"],["Beef mince",500,"g","Meat & Seafood"],["Tomato passata",400,"ml","Pantry"],["Bechamel sauce",500,"ml","Dairy & Eggs"],["Parmesan",60,"g","Dairy & Eggs"]]),
+  R("Paella","Dinner",45,["Seafood","Shellfish","Chicken"],[],[["Arborio rice",2,"cup","Pantry"],["Prawns",300,"g","Meat & Seafood"],["Chicken thigh",300,"g","Meat & Seafood"],["Capsicum",1,"","Produce"],["Saffron",1,"pinch","Pantry"]]),
+  R("Jambalaya","Dinner",40,["Seafood","Shellfish","Chicken","Spicy"],[],[["Prawns",300,"g","Meat & Seafood"],["Chicken breast",300,"g","Meat & Seafood"],["Sausages",200,"g","Meat & Seafood"],["Rice",2,"cup","Bakery & Grains"],["Cajun seasoning",2,"tbsp","Pantry"]]),
+  R("Gnocchi with Sage Butter","Dinner",20,["Extra Cheesy"],["Kid-Friendly"],[["Gnocchi",800,"g","Bakery & Grains"],["Butter",4,"tbsp","Dairy & Eggs"],["Sage",1,"handful","Produce"],["Parmesan",60,"g","Dairy & Eggs"]]),
+  R("Chicken Pot Pie","Dinner",50,["Chicken","Peas"],["Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Puff pastry",1,"sheet","Bakery & Grains"],["Frozen peas",1,"cup","Produce"],["Carrot",2,"","Produce"],["Cream",0.5,"cup","Dairy & Eggs"]]),
+  R("Beef Chilli","Dinner",40,["Red Meat","Beef","Spicy","Beans"],[],[["Beef mince",500,"g","Meat & Seafood"],["Kidney beans",1,"tin","Pantry"],["Tomato passata",500,"ml","Pantry"],["Onion",1,"","Produce"],["Chilli powder",2,"tbsp","Pantry"]]),
+  R("Turkey Burgers","Dinner",20,[],["Kid-Friendly"],[["Turkey mince",500,"g","Meat & Seafood"],["Burger buns",4,"","Bakery & Grains"],["Lettuce",1,"head","Produce"],["Tomato",2,"","Produce"],["Cheddar cheese",60,"g","Dairy & Eggs"]]),
+  R("Salmon Teriyaki Bowl","Dinner",25,["Seafood","Fish"],["Healthy"],[["Salmon fillets",4,"","Meat & Seafood"],["Jasmine rice",2,"cup","Bakery & Grains"],["Broccoli",1,"head","Produce"],["Teriyaki sauce",0.5,"cup","Pantry"],["Sesame seeds",1,"tbsp","Pantry"]]),
+  R("Cod with Herb Crust","Dinner",25,["Seafood","Fish"],["Healthy"],[["Cod fillets",4,"","Meat & Seafood"],["Breadcrumbs",1,"cup","Pantry"],["Parsley",1,"handful","Produce"],["Lemon",1,"","Produce"],["Butter",2,"tbsp","Dairy & Eggs"]]),
+  R("Beef Ragu Pasta","Dinner",90,["Red Meat","Beef","Onions"],[],[["Beef chuck",600,"g","Meat & Seafood"],["Tomato passata",700,"ml","Pantry"],["Carrot",2,"","Produce"],["Onion",1,"","Produce"],["Pappardelle pasta",400,"g","Bakery & Grains"]]),
+  R("Chicken Katsu","Dinner",30,["Chicken","Egg"],["Kid-Friendly"],[["Chicken breast",4,"","Meat & Seafood"],["Breadcrumbs",1.5,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Jasmine rice",2,"cup","Bakery & Grains"],["Katsu sauce",0.5,"cup","Pantry"]]),
+  R("Pork Ramen","Dinner",40,["Pork","Egg"],[],[["Pork belly",400,"g","Meat & Seafood"],["Ramen noodles",400,"g","Bakery & Grains"],["Eggs",4,"","Dairy & Eggs"],["Spring onion",2,"","Produce"],["Chicken stock",1.5,"l","Pantry"]]),
+  R("Vegetable Paella","Dinner",40,["Peas"],["Healthy"],[["Arborio rice",2,"cup","Pantry"],["Capsicum",2,"","Produce"],["Peas",1,"cup","Produce"],["Vegetable stock",1,"l","Pantry"],["Saffron",1,"pinch","Pantry"]]),
+  R("Eggplant Parmesan","Dinner",50,["Extra Cheesy"],["Healthy"],[["Eggplant",3,"","Produce"],["Tomato passata",500,"ml","Pantry"],["Mozzarella",250,"g","Dairy & Eggs"],["Parmesan",60,"g","Dairy & Eggs"],["Breadcrumbs",1,"cup","Pantry"]]),
+  R("Cauliflower Curry","Dinner",35,["Spicy","Cauliflower","Beans"],["Healthy"],[["Cauliflower",1,"head","Produce"],["Coconut milk",400,"ml","Pantry"],["Curry powder",2,"tbsp","Pantry"],["Chickpeas",1,"tin","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Chickpea & Spinach Stew","Dinner",30,["Beans","Spinach"],["Healthy"],[["Chickpeas",2,"tins","Pantry"],["Spinach",3,"cup","Produce"],["Tomato passata",500,"ml","Pantry"],["Cumin",1,"tsp","Pantry"],["Garlic",2,"cloves","Produce"]]),
+  R("Black Bean Enchiladas","Dinner",40,["Beans","Extra Cheesy","Spicy"],["Healthy"],[["Black beans",2,"tins","Pantry"],["Tortilla wraps",8,"","Bakery & Grains"],["Enchilada sauce",500,"ml","Pantry"],["Cheddar cheese",150,"g","Dairy & Eggs"],["Capsicum",1,"","Produce"]]),
+  R("Sweet & Sour Chicken","Dinner",30,["Chicken"],["Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Capsicum",1,"","Produce"],["Pineapple",1,"cup","Produce"],["Jasmine rice",2,"cup","Bakery & Grains"],["Sweet & sour sauce",0.5,"cup","Pantry"]]),
+  R("Orange Chicken","Dinner",30,["Chicken"],["Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Orange juice",0.5,"cup","Pantry"],["Soy sauce",3,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"],["Spring onion",2,"","Produce"]]),
+  R("Kung Pao Chicken","Dinner",25,["Chicken","Spicy","Peanuts"],[],[["Chicken breast",500,"g","Meat & Seafood"],["Peanuts",0.5,"cup","Pantry"],["Capsicum",1,"","Produce"],["Soy sauce",3,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("General Tso's Chicken","Dinner",30,["Chicken","Spicy"],["Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Breadcrumbs",1,"cup","Pantry"],["Soy sauce",3,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"],["Broccoli",1,"head","Produce"]]),
+  R("Beef & Broccoli Noodles","Dinner",25,["Red Meat","Beef","Broccoli"],[],[["Beef strips",500,"g","Meat & Seafood"],["Broccoli",1,"head","Produce"],["Egg noodles",400,"g","Bakery & Grains"],["Soy sauce",3,"tbsp","Pantry"],["Garlic",2,"cloves","Produce"]]),
+  R("Pork Dumplings","Dinner",40,["Pork"],[],[["Pork mince",400,"g","Meat & Seafood"],["Dumpling wrappers",30,"","Bakery & Grains"],["Cabbage",1,"cup","Produce"],["Ginger",1,"thumb","Produce"],["Soy sauce",2,"tbsp","Pantry"]]),
+  R("Chicken Enchilada Casserole","Dinner",45,["Chicken","Extra Cheesy","Spicy","Beans"],["Kid-Friendly"],[["Chicken breast",500,"g","Meat & Seafood"],["Tortilla wraps",8,"","Bakery & Grains"],["Enchilada sauce",500,"ml","Pantry"],["Cheddar cheese",150,"g","Dairy & Eggs"],["Black beans",1,"tin","Pantry"]]),
+  R("BBQ Ribs","Dinner",90,["Red Meat","Pork"],[],[["Pork ribs",1.5,"kg","Meat & Seafood"],["BBQ sauce",1,"cup","Pantry"],["Brown sugar",0.25,"cup","Pantry"],["Paprika",1,"tbsp","Pantry"]]),
+  R("Grilled Steak with Chimichurri","Dinner",25,["Red Meat","Beef","Garlic"],["Healthy"],[["Beef steak",800,"g","Meat & Seafood"],["Parsley",1,"bunch","Produce"],["Garlic",3,"cloves","Produce"],["Olive oil",0.5,"cup","Pantry"],["Red wine vinegar",2,"tbsp","Pantry"]]),
+  R("Lemon Herb Cod","Dinner",25,["Seafood","Fish"],["Healthy"],[["Cod fillets",4,"","Meat & Seafood"],["Lemon",2,"","Produce"],["Parsley",1,"handful","Produce"],["Olive oil",2,"tbsp","Pantry"],["Green beans",2,"cup","Produce"]]),
+  R("Vegetable Stir-Fry with Cashews","Dinner",20,["Nuts","Broccoli"],["Healthy"],[["Broccoli",1,"head","Produce"],["Capsicum",1,"","Produce"],["Cashews",0.5,"cup","Pantry"],["Soy sauce",3,"tbsp","Pantry"],["Jasmine rice",2,"cup","Bakery & Grains"]]),
+  R("Chicken Piccata","Dinner",30,["Chicken","Garlic"],[],[["Chicken breast",4,"","Meat & Seafood"],["Capers",2,"tbsp","Pantry"],["Lemon",2,"","Produce"],["Butter",3,"tbsp","Dairy & Eggs"],["Spaghetti",300,"g","Bakery & Grains"]]),
+  R("Sausage & Peppers Pasta","Dinner",30,["Red Meat","Pork","Extra Cheesy"],[],[["Sausages",6,"","Meat & Seafood"],["Capsicum",2,"","Produce"],["Penne pasta",400,"g","Bakery & Grains"],["Tomato passata",500,"ml","Pantry"],["Parmesan",40,"g","Dairy & Eggs"]]),
+  R("Turkey Tetrazzini","Dinner",45,["Extra Cheesy","Mushrooms"],[],[["Turkey breast",400,"g","Meat & Seafood"],["Spaghetti",400,"g","Bakery & Grains"],["Mushrooms",200,"g","Produce"],["Cream",1,"cup","Dairy & Eggs"],["Parmesan",60,"g","Dairy & Eggs"]]),
+  R("Beef Bourguignon","Dinner",120,["Red Meat","Beef","Mushrooms","Onions"],[],[["Beef chuck",800,"g","Meat & Seafood"],["Red wine",2,"cup","Pantry"],["Mushrooms",250,"g","Produce"],["Carrot",3,"","Produce"],["Pearl onions",200,"g","Produce"]]),
+  R("Chicken & Broccoli Pasta","Dinner",25,["Chicken","Extra Cheesy","Broccoli"],["Kid-Friendly"],[["Chicken breast",400,"g","Meat & Seafood"],["Broccoli",1,"head","Produce"],["Pasta",400,"g","Bakery & Grains"],["Cream",1,"cup","Dairy & Eggs"],["Parmesan",60,"g","Dairy & Eggs"]]),
+  R("Steak and Veggies","Dinner",25,["Red Meat","Beef"],["Healthy"],[["Beef steak",4,"","Meat & Seafood"],["Carrot",3,"","Produce"],["Broccoli",1,"head","Produce"],["Green beans",2,"cup","Produce"],["Butter",2,"tbsp","Dairy & Eggs"]]),
+  R("Curried Sausages","Dinner",30,["Red Meat","Pork","Onions"],["Kid-Friendly"],[["Sausages",8,"","Meat & Seafood"],["Curry powder",2,"tbsp","Pantry"],["Onion",1,"","Produce"],["Carrot",2,"","Produce"],["Beef stock",500,"ml","Pantry"]]),
+  R("Bangers and Mash","Dinner",30,["Red Meat","Pork","Onions"],["Kid-Friendly"],[["Sausages",8,"","Meat & Seafood"],["Potatoes",5,"","Produce"],["Milk",0.5,"cup","Dairy & Eggs"],["Butter",3,"tbsp","Dairy & Eggs"],["Frozen peas",1,"cup","Produce"]]),
+  R("Chicken Schnitzel with Veg","Dinner",30,["Chicken","Egg"],["Kid-Friendly"],[["Chicken schnitzels",4,"","Meat & Seafood"],["Breadcrumbs",1.5,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Potatoes",4,"","Produce"],["Green beans",2,"cup","Produce"]]),
+  R("Fish and Chips","Dinner",30,["Seafood","Fish"],["Kid-Friendly"],[["Fish fillets",4,"","Meat & Seafood"],["Potatoes",5,"","Produce"],["Frozen peas",1,"cup","Produce"],["Flour",0.5,"cup","Pantry"],["Lemon",1,"","Produce"]]),
+  R("Meat and Three Veg","Dinner",45,["Red Meat","Beef"],["Healthy"],[["Roast beef",800,"g","Meat & Seafood"],["Potatoes",4,"","Produce"],["Carrot",3,"","Produce"],["Broccoli",1,"head","Produce"],["Gravy",1,"cup","Pantry"]]),
+  R("Seafood Pasta","Dinner",30,["Seafood","Shellfish","Fish","Garlic"],[],[["Mixed seafood (prawns, mussels, calamari)",500,"g","Meat & Seafood"],["Spaghetti",400,"g","Bakery & Grains"],["Garlic",3,"cloves","Produce"],["Tomato passata",400,"ml","Pantry"],["White wine",0.5,"cup","Pantry"],["Parsley",1,"handful","Produce"]]),
+  R("Lasagna","Dinner",60,["Red Meat","Beef","Extra Cheesy","Onions"],["Kid-Friendly"],[["Lasagna sheets",12,"","Bakery & Grains"],["Beef mince",500,"g","Meat & Seafood"],["Tomato passata",700,"ml","Pantry"],["Bechamel sauce",500,"ml","Dairy & Eggs"],["Mozzarella",250,"g","Dairy & Eggs"],["Onion",1,"","Produce"]]),
+  R("Carbonara","Dinner",25,["Egg","Extra Cheesy","Pork","Bacon","Garlic"],[],[["Spaghetti",400,"g","Bakery & Grains"],["Bacon",200,"g","Meat & Seafood"],["Eggs",4,"","Dairy & Eggs"],["Parmesan",80,"g","Dairy & Eggs"],["Garlic",2,"cloves","Produce"]]),
+  R("Slow Cooker Beef Stew","Dinner",15,["Red Meat","Beef","Onions"],["Slow Cooker","Healthy"],[["Beef chuck",800,"g","Meat & Seafood"],["Carrot",3,"","Produce"],["Potatoes",4,"","Produce"],["Onion",1,"","Produce"],["Beef stock",500,"ml","Pantry"]]),
+  R("Slow Cooker Chicken Curry","Dinner",15,["Chicken","Spicy","Onions"],["Slow Cooker"],[["Chicken thigh",800,"g","Meat & Seafood"],["Curry powder",2,"tbsp","Pantry"],["Coconut milk",400,"ml","Pantry"],["Onion",1,"","Produce"],["Sweet potato",2,"","Produce"]]),
+  R("Slow Cooker Pulled Pork","Dinner",15,["Red Meat","Pork","Garlic"],["Slow Cooker"],[["Pork shoulder",1.5,"kg","Meat & Seafood"],["BBQ sauce",1,"cup","Pantry"],["Onion",1,"","Produce"],["Garlic",3,"cloves","Produce"],["Brown sugar",0.25,"cup","Pantry"]]),
+  R("Slow Cooker Beef Chilli","Dinner",15,["Red Meat","Beef","Spicy","Beans","Onions"],["Slow Cooker","Healthy"],[["Beef chuck",800,"g","Meat & Seafood"],["Kidney beans",2,"tins","Pantry"],["Tomato passata",700,"ml","Pantry"],["Onion",1,"","Produce"],["Chilli powder",2,"tbsp","Pantry"]]),
+  R("Slow Cooker Chicken & Veggie Soup","Dinner",15,["Chicken","Onions"],["Slow Cooker","Healthy"],[["Chicken breast",600,"g","Meat & Seafood"],["Carrot",3,"","Produce"],["Celery",2,"stalks","Produce"],["Chicken stock",1.5,"l","Pantry"],["Onion",1,"","Produce"]]),
+  R("Slow Cooker Lamb Shanks","Dinner",20,["Red Meat","Onions"],["Slow Cooker"],[["Lamb shanks",4,"","Meat & Seafood"],["Red wine",1,"cup","Pantry"],["Carrot",2,"","Produce"],["Onion",1,"","Produce"],["Rosemary",2,"sprigs","Produce"]]),
+  R("Slow Cooker Butter Chicken","Dinner",15,["Chicken","Spicy","Onions"],["Slow Cooker"],[["Chicken thigh",800,"g","Meat & Seafood"],["Tomato passata",500,"ml","Pantry"],["Cream",0.5,"cup","Dairy & Eggs"],["Garam masala",2,"tbsp","Pantry"],["Onion",1,"","Produce"]]),
+  R("Slow Cooker Vegetable Curry","Dinner",15,["Spicy","Beans"],["Slow Cooker","Healthy"],[["Chickpeas",2,"tins","Pantry"],["Sweet potato",3,"","Produce"],["Coconut milk",400,"ml","Pantry"],["Curry powder",2,"tbsp","Pantry"],["Spinach",2,"cup","Produce"]]),
+  R("Slow Cooker Sausage Casserole","Dinner",15,["Red Meat","Pork","Onions","Beans"],["Slow Cooker","Kid-Friendly"],[["Sausages",8,"","Meat & Seafood"],["Kidney beans",1,"tin","Pantry"],["Tomato passata",500,"ml","Pantry"],["Carrot",2,"","Produce"],["Onion",1,"","Produce"]]),
+  R("Slow Cooker Corned Beef","Dinner",15,["Red Meat","Beef","Onions"],["Slow Cooker"],[["Corned beef",1.2,"kg","Meat & Seafood"],["Carrot",3,"","Produce"],["Onion",1,"","Produce"],["Bay leaves",2,"","Pantry"],["Brown sugar",2,"tbsp","Pantry"]]),
+
+  /* ---------- Snack (25) ---------- */
+  R("Apple Slices & Peanut Butter","Snack",5,[],["Healthy","Kid-Friendly"],[["Apple",4,"","Produce"],["Peanut butter",6,"tbsp","Pantry"]]),
+  R("Hummus & Veggie Sticks","Snack",10,[],["Healthy"],[["Hummus",1.5,"cup","Pantry"],["Carrot",3,"","Produce"],["Cucumber",1,"","Produce"],["Celery",2,"stalks","Produce"]]),
+  R("Trail Mix","Snack",5,[],["Healthy"],[["Almonds",1,"cup","Pantry"],["Raisins",1,"cup","Pantry"],["Pumpkin seeds",0.5,"cup","Pantry"],["Dark chocolate chips",0.5,"cup","Pantry"]]),
+  R("Cheese & Crackers","Snack",5,["Extra Cheesy"],["Kid-Friendly"],[["Cheddar cheese",200,"g","Dairy & Eggs"],["Crackers",1,"box","Pantry"],["Grapes",1,"cup","Produce"]]),
+  R("Yogurt Tubes","Snack",2,[],["Kid-Friendly"],[["Yogurt tubes",8,"","Dairy & Eggs"]]),
+  R("Popcorn","Snack",8,[],["Kid-Friendly"],[["Popcorn kernels",0.5,"cup","Pantry"],["Butter",2,"tbsp","Dairy & Eggs"],["Salt",1,"tsp","Pantry"]]),
+  R("Energy Balls","Snack",15,[],["Healthy"],[["Rolled oats",1.5,"cup","Pantry"],["Peanut butter",0.5,"cup","Pantry"],["Honey",3,"tbsp","Pantry"],["Chia seeds",2,"tbsp","Pantry"]]),
+  R("Banana Bread Bites","Snack",35,["Egg"],["Kid-Friendly"],[["Flour",1.5,"cup","Pantry"],["Banana",3,"","Produce"],["Eggs",2,"","Dairy & Eggs"],["Butter",0.5,"cup","Dairy & Eggs"],["Brown sugar",0.5,"cup","Pantry"]]),
+  R("Rice Cakes & Almond Butter","Snack",5,[],["Healthy"],[["Rice cakes",8,"","Pantry"],["Almond butter",6,"tbsp","Pantry"],["Banana",2,"","Produce"]]),
+  R("Veggie Chips","Snack",25,[],["Healthy"],[["Kale",2,"cup","Produce"],["Sweet potato",2,"","Produce"],["Olive oil",2,"tbsp","Pantry"],["Salt",1,"tsp","Pantry"]]),
+  R("Fruit Kebabs","Snack",10,[],["Kid-Friendly","Healthy"],[["Strawberries",1,"cup","Produce"],["Melon",1,"cup","Produce"],["Grapes",1,"cup","Produce"],["Wooden skewers",8,"","Other"]]),
+  R("Roasted Chickpeas","Snack",30,["Spicy"],["Healthy"],[["Chickpeas",2,"tins","Pantry"],["Olive oil",2,"tbsp","Pantry"],["Paprika",1,"tsp","Pantry"],["Cumin",1,"tsp","Pantry"]]),
+  R("Mini Muffins","Snack",25,["Egg"],["Kid-Friendly"],[["Flour",2,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Blueberries",1,"cup","Produce"]]),
+  R("Cheese Quesadilla Bites","Snack",12,["Extra Cheesy"],["Kid-Friendly"],[["Tortilla wraps",4,"","Bakery & Grains"],["Cheddar cheese",150,"g","Dairy & Eggs"]]),
+  R("Deviled Eggs","Snack",20,["Egg"],[],[["Eggs",8,"","Dairy & Eggs"],["Mayonnaise",3,"tbsp","Pantry"],["Mustard",1,"tsp","Pantry"],["Paprika",0.5,"tsp","Pantry"]]),
+  R("Granola Bars","Snack",25,[],["Healthy","Kid-Friendly"],[["Rolled oats",2,"cup","Pantry"],["Honey",0.5,"cup","Pantry"],["Peanut butter",0.5,"cup","Pantry"],["Dried cranberries",0.5,"cup","Pantry"]]),
+  R("Edamame","Snack",8,[],["Healthy"],[["Edamame",3,"cup","Produce"],["Sea salt",1,"tsp","Pantry"]]),
+  R("Peanut Butter Crackers","Snack",5,[],["Kid-Friendly"],[["Crackers",1,"box","Pantry"],["Peanut butter",6,"tbsp","Pantry"]]),
+  R("Smoothie Pops","Snack",10,[],["Kid-Friendly","Healthy"],[["Mixed berries",2,"cup","Produce"],["Greek yogurt",1.5,"cup","Dairy & Eggs"],["Honey",2,"tbsp","Pantry"]]),
+  R("Guacamole & Chips","Snack",15,[],[],[["Avocado",3,"","Produce"],["Lime",1,"","Produce"],["Tomato",1,"","Produce"],["Tortilla chips",1,"bag","Pantry"]]),
+  R("Cottage Cheese & Pineapple","Snack",5,[],["Healthy"],[["Cottage cheese",2,"cup","Dairy & Eggs"],["Pineapple",1,"cup","Produce"]]),
+  R("Mixed Nuts","Snack",2,[],["Healthy"],[["Almonds",1,"cup","Pantry"],["Cashews",1,"cup","Pantry"],["Walnuts",1,"cup","Pantry"]]),
+  R("Ants on a Log","Snack",8,[],["Kid-Friendly","Healthy"],[["Celery",4,"stalks","Produce"],["Peanut butter",6,"tbsp","Pantry"],["Raisins",0.5,"cup","Pantry"]]),
+  R("Baked Apple Chips","Snack",90,[],["Healthy"],[["Apple",4,"","Produce"],["Cinnamon",1,"tsp","Pantry"]]),
+  R("Pretzels & Hummus","Snack",5,[],["Kid-Friendly"],[["Pretzels",2,"cup","Pantry"],["Hummus",1,"cup","Pantry"]]),
+  R("Chocolate Covered Strawberries","Snack",15,[],["Kid-Friendly"],[["Strawberries",2,"cup","Produce"],["Dark chocolate",200,"g","Pantry"]]),
+  R("Cheese Stick & Grapes","Snack",3,["Extra Cheesy"],["Kid-Friendly"],[["String cheese",8,"","Dairy & Eggs"],["Grapes",2,"cup","Produce"]]),
+  R("Banana Chips","Snack",90,[],["Healthy"],[["Banana",4,"","Produce"],["Lemon juice",2,"tbsp","Produce"]]),
+  R("Homemade Beef Jerky","Snack",240,["Red Meat","Beef"],[],[["Beef strips",500,"g","Meat & Seafood"],["Soy sauce",0.5,"cup","Pantry"],["Worcestershire sauce",2,"tbsp","Pantry"],["Black pepper",1,"tsp","Pantry"]]),
+  R("Rice Krispie Treats","Snack",15,[],["Kid-Friendly"],[["Rice cereal",6,"cup","Pantry"],["Marshmallows",400,"g","Pantry"],["Butter",4,"tbsp","Dairy & Eggs"]]),
+  R("Oatmeal Raisin Cookies","Snack",25,["Egg","Raisins"],["Kid-Friendly"],[["Rolled oats",2,"cup","Pantry"],["Flour",1,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Raisins",1,"cup","Pantry"],["Butter",0.5,"cup","Dairy & Eggs"]]),
+  R("Peanut Butter Cookies","Snack",20,["Peanuts","Egg"],["Kid-Friendly"],[["Peanut butter",1,"cup","Pantry"],["Sugar",1,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"]]),
+  R("No-Bake Energy Bites","Snack",15,[],["Healthy"],[["Rolled oats",1.5,"cup","Pantry"],["Peanut butter",0.5,"cup","Pantry"],["Honey",3,"tbsp","Pantry"],["Chocolate chips",0.25,"cup","Pantry"]]),
+  R("Veggie Straws","Snack",5,[],["Kid-Friendly"],[["Veggie straws",4,"cup","Pantry"]]),
+  R("Roasted Almonds","Snack",15,["Nuts"],["Healthy"],[["Almonds",3,"cup","Pantry"],["Olive oil",1,"tbsp","Pantry"],["Sea salt",1,"tsp","Pantry"]]),
+  R("Kale Chips","Snack",20,[],["Healthy"],[["Kale",4,"cup","Produce"],["Olive oil",2,"tbsp","Pantry"],["Salt",1,"tsp","Pantry"]]),
+  R("Popcorn Trail Mix","Snack",8,["Nuts","Peanuts"],["Kid-Friendly"],[["Popcorn",4,"cup","Pantry"],["Pretzels",1,"cup","Pantry"],["Chocolate candies",0.5,"cup","Pantry"],["Peanuts",0.5,"cup","Pantry"]]),
+  R("Cheese & Apple Slices","Snack",5,["Extra Cheesy"],["Kid-Friendly"],[["Cheddar cheese",200,"g","Dairy & Eggs"],["Apple",4,"","Produce"]]),
+  R("Yogurt Covered Pretzels","Snack",20,[],["Kid-Friendly"],[["Pretzels",2,"cup","Pantry"],["Yogurt melts",200,"g","Pantry"]]),
+  R("Frozen Grapes","Snack",5,[],["Healthy","Kid-Friendly"],[["Grapes",3,"cup","Produce"]]),
+  R("Baked Sweet Potato Fries","Snack",30,[],["Healthy"],[["Sweet potato",3,"","Produce"],["Olive oil",2,"tbsp","Pantry"],["Paprika",1,"tsp","Pantry"]]),
+  R("Zucchini Fritters","Snack",20,["Egg","Extra Cheesy"],["Healthy"],[["Zucchini",3,"","Produce"],["Eggs",2,"","Dairy & Eggs"],["Flour",0.5,"cup","Pantry"],["Parmesan",40,"g","Dairy & Eggs"]]),
+  R("Cucumber Sandwiches","Snack",10,["Extra Cheesy"],[],[["Cucumber",1,"","Produce"],["White bread",8,"slices","Bakery & Grains"],["Cream cheese",6,"tbsp","Dairy & Eggs"],["Dill",1,"tbsp","Produce"]]),
+  R("Mini Caprese Skewers","Snack",12,["Extra Cheesy","Tomatoes"],["Healthy"],[["Cherry tomatoes",2,"cup","Produce"],["Mozzarella balls",2,"cup","Dairy & Eggs"],["Basil",1,"handful","Produce"],["Wooden skewers",12,"","Other"]]),
+  R("Stuffed Mushrooms","Snack",30,["Mushrooms","Extra Cheesy","Garlic"],[],[["Mushrooms",20,"","Produce"],["Cream cheese",4,"tbsp","Dairy & Eggs"],["Parmesan",40,"g","Dairy & Eggs"],["Garlic",2,"cloves","Produce"]]),
+  R("Deviled Egg Bites","Snack",20,["Egg"],[],[["Eggs",8,"","Dairy & Eggs"],["Mayonnaise",3,"tbsp","Pantry"],["Mustard",1,"tsp","Pantry"],["Paprika",0.5,"tsp","Pantry"]]),
+  R("Homemade Applesauce","Snack",30,[],["Healthy","Kid-Friendly"],[["Apple",6,"","Produce"],["Cinnamon",1,"tsp","Pantry"],["Lemon juice",1,"tbsp","Produce"]]),
+  R("Fruit Salad Cups","Snack",10,[],["Healthy","Kid-Friendly"],[["Mixed berries",2,"cup","Produce"],["Melon",2,"cup","Produce"],["Grapes",1,"cup","Produce"],["Pineapple",1,"cup","Produce"]]),
+  R("Peanut Butter Banana Bites","Snack",8,["Peanuts"],["Kid-Friendly","Healthy"],[["Banana",3,"","Produce"],["Peanut butter",0.5,"cup","Pantry"],["Granola",0.5,"cup","Pantry"]]),
+  R("Cheese Popcorn","Snack",8,["Extra Cheesy"],["Kid-Friendly"],[["Popcorn kernels",0.5,"cup","Pantry"],["Butter",2,"tbsp","Dairy & Eggs"],["Parmesan",0.5,"cup","Dairy & Eggs"]]),
+  R("Trail Mix Bars","Snack",25,["Nuts"],["Healthy"],[["Rolled oats",2,"cup","Pantry"],["Almonds",0.5,"cup","Pantry"],["Honey",0.5,"cup","Pantry"],["Dried cranberries",0.5,"cup","Pantry"]]),
+  R("Coconut Macaroons","Snack",25,["Coconut","Egg"],["Kid-Friendly"],[["Shredded coconut",3,"cup","Pantry"],["Eggs",3,"","Dairy & Eggs"],["Sugar",0.5,"cup","Pantry"],["Vanilla extract",1,"tsp","Pantry"]]),
+  R("Chocolate Banana Bites","Snack",15,["Peanuts"],["Kid-Friendly"],[["Banana",3,"","Produce"],["Dark chocolate",200,"g","Pantry"],["Peanuts",0.25,"cup","Pantry"]]),
+  R("Roasted Edamame","Snack",25,[],["Healthy"],[["Edamame",3,"cup","Produce"],["Olive oil",2,"tbsp","Pantry"],["Sea salt",1,"tsp","Pantry"]]),
+  R("Veggie Dip Platter","Snack",12,[],["Healthy"],[["Carrot",2,"","Produce"],["Cucumber",1,"","Produce"],["Capsicum",1,"","Produce"],["Ranch dressing",1,"cup","Pantry"]]),
+  R("Baked Tortilla Chips","Snack",15,[],["Healthy"],[["Tortilla wraps",6,"","Bakery & Grains"],["Olive oil",2,"tbsp","Pantry"],["Sea salt",1,"tsp","Pantry"]]),
+  R("Berry Yogurt Bark","Snack",20,[],["Healthy","Kid-Friendly"],[["Greek yogurt",3,"cup","Dairy & Eggs"],["Mixed berries",1.5,"cup","Produce"],["Honey",3,"tbsp","Pantry"]]),
+  R("Cinnamon Sugar Pretzels","Snack",15,[],["Kid-Friendly"],[["Pretzels",3,"cup","Pantry"],["Butter",4,"tbsp","Dairy & Eggs"],["Cinnamon",1,"tbsp","Pantry"],["Sugar",0.25,"cup","Pantry"]]),
+  R("Cheese Crisps","Snack",12,["Extra Cheesy"],[],[["Parmesan",1.5,"cup","Dairy & Eggs"]]),
+  R("Pumpkin Seeds","Snack",25,[],["Healthy"],[["Pumpkin seeds",2,"cup","Pantry"],["Olive oil",1,"tbsp","Pantry"],["Sea salt",1,"tsp","Pantry"]]),
+  R("Dried Mango","Snack",240,[],["Healthy"],[["Mango",4,"","Produce"]]),
+  R("Mini Quiches","Snack",30,["Egg","Extra Cheesy","Spinach"],[],[["Eggs",6,"","Dairy & Eggs"],["Puff pastry",1,"sheet","Bakery & Grains"],["Cheddar cheese",80,"g","Dairy & Eggs"],["Spinach",1,"cup","Produce"]]),
+  R("Bruschetta Bites","Snack",15,["Tomatoes","Garlic"],["Healthy"],[["Baguette",1,"","Bakery & Grains"],["Cherry tomatoes",2,"cup","Produce"],["Basil",1,"handful","Produce"],["Garlic",2,"cloves","Produce"],["Olive oil",2,"tbsp","Pantry"]]),
+  R("Spinach Artichoke Dip","Snack",30,["Extra Cheesy","Spinach"],[],[["Spinach",2,"cup","Produce"],["Artichoke hearts",1,"tin","Pantry"],["Cream cheese",8,"tbsp","Dairy & Eggs"],["Parmesan",60,"g","Dairy & Eggs"]]),
+  R("Onion Dip & Chips","Snack",10,["Onions"],[],[["Sour cream",2,"cup","Dairy & Eggs"],["Onion soup mix",1,"packet","Pantry"],["Potato chips",1,"bag","Pantry"]]),
+  R("Cheese Ball & Crackers","Snack",20,["Extra Cheesy"],[],[["Cream cheese",400,"g","Dairy & Eggs"],["Cheddar cheese",200,"g","Dairy & Eggs"],["Crackers",1,"box","Pantry"],["Chives",2,"tbsp","Produce"]]),
+  R("Mini Corn Muffins","Snack",25,["Egg"],["Kid-Friendly"],[["Cornmeal",1.5,"cup","Pantry"],["Eggs",2,"","Dairy & Eggs"],["Milk",1,"cup","Dairy & Eggs"],["Honey",3,"tbsp","Pantry"]]),
+  R("Peanut Butter Energy Bars","Snack",20,["Peanuts"],["Healthy"],[["Rolled oats",2,"cup","Pantry"],["Peanut butter",0.75,"cup","Pantry"],["Honey",0.5,"cup","Pantry"],["Chocolate chips",0.25,"cup","Pantry"]]),
+  R("Chocolate Chip Granola Bars","Snack",25,[],["Kid-Friendly"],[["Rolled oats",2,"cup","Pantry"],["Honey",0.5,"cup","Pantry"],["Peanut butter",0.5,"cup","Pantry"],["Chocolate chips",0.5,"cup","Pantry"]]),
+  R("Apple Nachos","Snack",10,["Peanuts"],["Kid-Friendly","Healthy"],[["Apple",3,"","Produce"],["Peanut butter",0.25,"cup","Pantry"],["Granola",0.5,"cup","Pantry"],["Dark chocolate chips",0.25,"cup","Pantry"]]),
+  R("Veggie Hummus Cups","Snack",10,[],["Healthy"],[["Hummus",1.5,"cup","Pantry"],["Carrot",2,"","Produce"],["Cucumber",1,"","Produce"],["Cherry tomatoes",1,"cup","Produce"]]),
+  R("Salsa & Chips","Snack",5,["Tomatoes"],[],[["Salsa",2,"cup","Pantry"],["Tortilla chips",1,"bag","Pantry"]]),
+  R("Pigs in a Blanket","Snack",25,["Red Meat","Pork"],["Kid-Friendly"],[["Cocktail sausages",20,"","Meat & Seafood"],["Puff pastry",1,"sheet","Bakery & Grains"],["Mustard",2,"tbsp","Pantry"]]),
+  R("Cheese Nachos","Snack",15,["Extra Cheesy","Spicy"],[],[["Tortilla chips",1,"bag","Pantry"],["Cheddar cheese",200,"g","Dairy & Eggs"],["Jalapenos",0.5,"cup","Pantry"],["Salsa",0.5,"cup","Pantry"]]),
+  R("Watermelon Feta Bites","Snack",10,["Extra Cheesy"],["Healthy"],[["Watermelon",3,"cup","Produce"],["Feta cheese",150,"g","Dairy & Eggs"],["Mint",1,"handful","Produce"],["Balsamic glaze",2,"tbsp","Pantry"]]),
+]; }
+function seedMembers(){ return [
+  { id: nid(), name:"Mum", color:COLOR.sage, dislikes:[] },
+  { id: nid(), name:"Dad", color:COLOR.mustard, dislikes:["Mushrooms"] },
+  { id: nid(), name:"Ava", color:COLOR.berry, dislikes:["Coriander","Olives"] },
+  { id: nid(), name:"Leo", color:COLOR.teal, dislikes:["Seafood","Spicy"] },
+]; }
+const DAYS = [
+  { key:"mon", label:"Monday", short:"Mon", quickDefault:true },
+  { key:"tue", label:"Tuesday", short:"Tue", quickDefault:true },
+  { key:"wed", label:"Wednesday", short:"Wed", quickDefault:true },
+  { key:"thu", label:"Thursday", short:"Thu", quickDefault:true },
+  { key:"fri", label:"Friday", short:"Fri", quickDefault:true },
+  { key:"sat", label:"Saturday", short:"Sat", quickDefault:false },
+  { key:"sun", label:"Sunday", short:"Sun", quickDefault:false },
+];
+
+/* ---------------------------------- persistence (localStorage) ---------------------------------- */
+const STORAGE_KEY = "familyFoodPlannerState_v1";
+function loadSavedState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    return raw ? JSON.parse(raw) : null;
+  }catch(e){ return null; }
+}
+function saveState(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      recipes: state.recipes,
+      members: state.members,
+      week: state.week,
+      favouriteIds: state.favouriteIds,
+      dislikedIds: state.dislikedIds,
+      shoppingChecked: state.shoppingChecked,
+    }));
+  }catch(e){ /* storage unavailable — app still works, just won't persist */ }
+}
+function bumpIdCounter(arr){
+  (arr || []).forEach(o => {
+    const n = parseInt(o.id, 10);
+    if(!isNaN(n) && n >= _id) _id = n + 1;
+  });
+}
+
+/* ---------------------------------- state ---------------------------------- */
+const _saved = loadSavedState();
+const state = {
+  recipes: _saved?.recipes || seedRecipes(),
+  members: _saved?.members || seedMembers(),
+  week: _saved?.week || DAYS.map(d => ({ ...d, quickRequired: d.quickDefault, meals: { Breakfast:null, Lunch:null, Dinner:null, Snack:null } })),
+  tab: "week",
+  sheet: null,
+  recipesFilter: { cat:"All", time:"all", diet:"all", show:"active" },
+  favouriteIds: _saved?.favouriteIds || {},
+  dislikedIds: _saved?.dislikedIds || {},
+  shoppingChecked: _saved?.shoppingChecked || {},
+  familyDropdownOpenId: null,
+  newMemberName: "",
+};
+bumpIdCounter(state.recipes);
+bumpIdCounter(state.members);
+
+/* ---------------------------------- helpers ---------------------------------- */
+function conflictsFor(recipe, members){
+  const hits = [];
+  members.forEach(m => {
+    const overlap = m.dislikes.filter(d => recipe.flags.includes(d));
+    if(overlap.length) hits.push({ member:m, tags:overlap });
+  });
+  return hits;
+}
+function pickRecipeForSlot(day, slotName){
+  const safe = state.recipes.filter(r => r.category === slotName && !isDisliked(r.id) && conflictsFor(r, state.members).length === 0);
+  if(safe.length === 0) return null;
+  const timeFiltered = day.quickRequired ? (safe.filter(r => r.prepTime <= 30).length ? safe.filter(r => r.prepTime <= 30) : safe) : safe;
+  const favs = timeFiltered.filter(r => isFavourite(r.id));
+  const pool = favs.length ? favs : timeFiltered;
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function isFavourite(id){ return !!state.favouriteIds[id]; }
+function isDisliked(id){ return !!state.dislikedIds[id]; }
+function toggleFavourite(id){
+  if(state.favouriteIds[id]) delete state.favouriteIds[id];
+  else { state.favouriteIds[id] = true; delete state.dislikedIds[id]; }
+}
+function toggleDisliked(id){
+  if(state.dislikedIds[id]){
+    delete state.dislikedIds[id];
+  } else {
+    state.dislikedIds[id] = true;
+    delete state.favouriteIds[id];
+    state.week.forEach(d => { SLOT_ORDER.forEach(s => { if(d.meals[s] === id) d.meals[s] = null; }); });
+  }
+}
+function fmtQty(qty){
+  const r = Math.round(qty*100)/100;
+  return Number.isInteger(r) ? String(r) : String(r);
+}
+function findRecipe(id){ return state.recipes.find(r => r.id === id); }
+function findDay(key){ return state.week.find(d => d.key === key); }
+
+/* Generates a sensible step-by-step method from a recipe's name + ingredients.
+   Works for the built-in recipe box AND anything the user adds themselves. */
+function generateSteps(r){
+  const name = r.name.toLowerCase();
+  const ing = r.ingredients || [];
+  const protein = ing.find(i => i.category === "Meat & Seafood");
+  const vegList = ing.filter(i => i.category === "Produce").map(i => i.name.toLowerCase());
+  const mainVeg = vegList[0];
+
+  if((r.tags||[]).includes("Slow Cooker")){
+    const steps = [];
+    steps.push(protein ? `Add the ${protein.name.toLowerCase()} to the slow cooker along with the vegetables and seasonings.` : "Add all the ingredients to the slow cooker.");
+    steps.push("Pour in the stock or liquid ingredients, give everything a stir, then pop the lid on.");
+    steps.push("Cook on low for 6–8 hours, or on high for 3–4 hours, until everything's tender.");
+    steps.push("Stir through (shredding the meat if needed), taste, adjust the seasoning, and serve.");
+    return steps;
+  }
+
+  const isNoCook = /sandwich|wrap|salad|toast|toastie|smoothie|parfait|\bdip\b|bark|popsicle|overnight oats|chia pudding|trail mix|nachos|hummus cups|dried |frozen grapes|mixed nuts|cheese (stick|ball|crisps)|bagel|panini/.test(name) && !/grilled|baked|roast/.test(name);
+  const isSoup = /soup|stew|chowder|ragu|bourguignon/.test(name);
+  const isCurry = /curry|curried|tikka masala|jambalaya|chilli/.test(name);
+  const isPasta = /pasta|spaghetti|penne|fettuccine|lasagna|gnocchi|ziti|noodle|mac and cheese|tetrazzini|carbonara/.test(name);
+  const isRice = /rice bowl|fried rice|risotto|paella|congee|bibimbap|poke bowl|rice \&/.test(name);
+  const isOven = /bake|baked|roast|casserole|\bpie\b|enchilada|schnitzel|meatloaf|wellington|moussaka|parmesan|stuffed|muffin|cookie|bread|scone|biscuit|quiche|\bslice\b/.test(name);
+
+  const steps = [];
+  if(isNoCook){
+    steps.push("Prep everything first — wash and chop any fresh ingredients, and measure out the rest.");
+    if(protein) steps.push(`If using ${protein.name.toLowerCase()}, cook it first and let it cool slightly.`);
+    steps.push("Layer, toss or blend everything together.");
+    steps.push("Serve straight away, or chill until you're ready to eat.");
+  } else if(isSoup || isCurry){
+    steps.push("Heat a splash of oil in a large pot over medium heat.");
+    if(mainVeg) steps.push(`Add the onion and any other veg like ${mainVeg}, and cook for a few minutes until softened.`);
+    if(protein) steps.push(`Add the ${protein.name.toLowerCase()} and cook until browned all over.`);
+    steps.push(`Pour in the remaining liquid ingredients, bring to a simmer, and cook for around ${Math.max(r.prepTime - 10, 15)}–${r.prepTime} minutes until everything's tender.`);
+    steps.push("Season to taste and serve hot.");
+  } else if(isPasta){
+    steps.push("Bring a large pot of salted water to the boil and cook the pasta according to the packet instructions.");
+    if(protein) steps.push(`Meanwhile, cook the ${protein.name.toLowerCase()} in a large pan until done.`);
+    steps.push("Add the remaining ingredients to the pan and stir through to combine.");
+    steps.push("Drain the pasta, toss it through the sauce, and serve hot.");
+  } else if(isRice){
+    steps.push("Cook the rice according to the packet instructions and set aside.");
+    if(protein) steps.push(`Meanwhile, cook the ${protein.name.toLowerCase()} in a hot pan or wok until done.`);
+    if(mainVeg) steps.push(`Add the ${mainVeg} and any other veg, and stir-fry for a few minutes until just tender.`);
+    steps.push("Combine everything with the rice and serve hot.");
+  } else if(isOven){
+    steps.push("Preheat the oven to 180°C (350°F).");
+    steps.push("Prepare and season all the ingredients, then arrange them in a baking dish or tray.");
+    steps.push(`Bake for roughly ${Math.max(r.prepTime - 10, 10)}–${r.prepTime} minutes, until cooked through.`);
+    steps.push("Rest for a few minutes before serving.");
+  } else {
+    steps.push("Prep all the ingredients — wash, chop and measure everything out.");
+    if(protein) steps.push(`Cook the ${protein.name.toLowerCase()} in a pan over medium-high heat until done.`);
+    if(mainVeg) steps.push(`Add the ${mainVeg} and any remaining veg, and cook until tender.`);
+    steps.push("Stir through the rest of the ingredients and warm everything together.");
+    steps.push("Season to taste and serve.");
+  }
+  return steps;
+}
+
+/* ---------------------------------- render: nav ---------------------------------- */
+function renderNav(){
+  const items = [
+    {key:"week", label:"Week", icon:"📅"},
+    {key:"recipes", label:"Recipes", icon:"🍽️"},
+    {key:"shopping", label:"Shopping", icon:"🛒"},
+    {key:"family", label:"Family", icon:"👪"},
+  ];
+  return `<div class="navrow">${items.map(it => `
+    <button class="navbtn ${state.tab===it.key?'active':''}" data-action="set-tab" data-tab="${it.key}">
+      <span class="navicon">${it.icon}</span>
+      <span class="navlabel">${it.label}</span>
+    </button>`).join("")}</div>`;
+}
+
+/* ---------------------------------- render: recipe card ---------------------------------- */
+function tagBadgesHTML(r){
+  return (r.tags||[]).map(t => {
+    const ts = TAG_STYLE[t];
+    return `<span class="badge" style="color:${ts.c};background:${ts.bg}">${ts.icon} ${t}</span>`;
+  }).join("");
+}
+function recipeCardHTML(r, compact){
+  const style = CATEGORY_STYLE[r.category] || CATEGORY_STYLE.Dinner;
+  const timeBadge = r.prepTime <= 30
+    ? `<span class="badge" style="color:${COLOR.sage};background:${COLOR.sageSoft}">⏱️ Quick</span>`
+    : `<span class="badge" style="color:${COLOR.teal};background:${COLOR.tealSoft}">🍲 Standard</span>`;
+  const searchBlob = esc((r.name + " " + r.ingredients.map(i => i.name).join(" ")).toLowerCase());
+  const fav = isFavourite(r.id), dis = isDisliked(r.id);
+  return `
+    <div class="rcard" data-action="open-recipe-detail" data-id="${r.id}" data-search="${searchBlob}">
+      <div class="rcard-strip" style="background:${style.c}"></div>
+      <div class="rcard-hole"></div>
+      <div class="rcard-fav-row">
+        <button class="icon-btn ${fav?'fav-active':''}" data-action="toggle-favourite" data-id="${r.id}" title="Favourite">${fav?'⭐':'☆'}</button>
+        <button class="icon-btn ${dis?'dis-active':''}" data-action="toggle-dislike-recipe" data-id="${r.id}" title="Don't show this recipe">👎</button>
+      </div>
+      <div class="rcard-body ${compact?'compact':''}">
+        <div class="rcard-badges">
+          <span class="badge" style="color:${style.c};background:${style.bg}">${esc(r.category)}</span>
+          ${timeBadge}
+          ${tagBadgesHTML(r)}
+        </div>
+        <div class="rcard-name serif">${esc(r.name)}</div>
+        <div class="rcard-meta">⏱️ ${r.prepTime} min</div>
+      </div>
+    </div>`;
+}
+/* variant used inside meal picker: clicking picks instead of opening detail */
+function recipePickHTML(r){
+  const style = CATEGORY_STYLE[r.category] || CATEGORY_STYLE.Dinner;
+  const timeBadge = r.prepTime <= 30
+    ? `<span class="badge" style="color:${COLOR.sage};background:${COLOR.sageSoft}">⏱️ Quick</span>`
+    : `<span class="badge" style="color:${COLOR.teal};background:${COLOR.tealSoft}">🍲 Standard</span>`;
+  const conflicts = conflictsFor(r, state.members);
+  const fav = isFavourite(r.id);
+  return `
+    <div style="margin-bottom:14px;">
+      <button class="rcard" data-action="picker-pick-recipe" data-id="${r.id}" style="width:100%;">
+        <div class="rcard-strip" style="background:${style.c}"></div>
+        <div class="rcard-hole"></div>
+        <div class="rcard-body compact">
+          <div class="rcard-badges">
+            <span class="badge" style="color:${style.c};background:${style.bg}">${esc(r.category)}</span>
+            ${timeBadge}
+            ${fav ? `<span class="badge" style="color:${COLOR.mustard};background:${COLOR.mustardSoft}">⭐ Favourite</span>` : ""}
+            ${tagBadgesHTML(r)}
+          </div>
+          <div class="rcard-name serif">${esc(r.name)}</div>
+          <div class="rcard-meta">⏱️ ${r.prepTime} min</div>
+        </div>
+      </button>
+      ${conflicts.length ? `<div class="conflict-note" style="margin-left:4px;">⚠️ ${esc(conflicts.map(c=>c.member.name).join(", "))} won't love this</div>` : ""}
+    </div>`;
+}
+
+/* ---------------------------------- render: week ---------------------------------- */
+function getTodayKey(){
+  const map = ["sun","mon","tue","wed","thu","fri","sat"];
+  return map[new Date().getDay()];
+}
+function renderWeek(){
+  let planned = 0, quick = 0;
+  const total = state.week.length * SLOT_ORDER.length;
+  state.week.forEach(d => SLOT_ORDER.forEach(s => {
+    const id = d.meals[s];
+    if(id){ planned++; if(findRecipe(id)?.prepTime <= 30) quick++; }
+  }));
+  return `
+    <div class="top-row" style="padding-bottom:0;">
+      <div>
+        <h1 class="page-title serif">This week's plate</h1>
+        <p class="page-sub">${planned} of ${total} meals planned · ${quick} quick</p>
+      </div>
+    </div>
+    ${todaySectionHTML()}
+    <div class="pillrow" style="padding-top:4px;">
+      <button class="pill" style="background:${COLOR.sage};color:#fff;border-color:transparent;" data-action="autofill-week">🔀 Auto-fill week</button>
+      ${planned > 0 ? `<button class="pill" data-action="clear-week">🗑️ Clear week</button>` : ""}
+    </div>
+    <div class="weekstrip" style="margin-top:8px;">
+      ${state.week.map(d => dayCardHTML(d)).join("")}
+    </div>
+    <div class="hint">
+      <span>👨‍🍳</span>
+      <span>Auto-fill only picks recipes with no flagged dislikes for anyone in the family, and sticks to Quick meals on days you've marked busy. It only fills empty slots — tap the 🔀 on a single day to fill just that one, or clear a slot first to re-roll it.</span>
+    </div>`;
+}
+function todaySectionHTML(){
+  const day = findDay(getTodayKey());
+  if(!day) return "";
+  const filled = SLOT_ORDER.filter(s => day.meals[s]).length;
+  return `
+    <div class="today-card">
+      <div class="today-card-head">
+        <div>
+          <span class="today-badge">TODAY</span>
+          <div class="today-day-name serif">${day.label}</div>
+        </div>
+        <span class="page-sub" style="margin:0;">${filled} of 4 planned</span>
+      </div>
+      <div class="today-slots">
+        ${SLOT_ORDER.map(s => todaySlotRowHTML(day, s)).join("")}
+      </div>
+    </div>`;
+}
+function todaySlotRowHTML(day, slotName){
+  const style = CATEGORY_STYLE[slotName];
+  const recipeId = day.meals[slotName];
+  const recipe = recipeId ? findRecipe(recipeId) : null;
+  if(recipe){
+    const conflicts = conflictsFor(recipe, state.members);
+    return `
+      <button class="today-slot filled" data-action="open-recipe-detail" data-id="${recipe.id}">
+        <span class="slot-dot" style="background:${style.c}"></span>
+        <span class="slot-text">
+          <span class="slot-label-sm">${slotName}${recipe.prepTime<=30 ? ' · ⏱️ Quick' : ' · 🍲 Standard'}</span>
+          <span class="today-slot-recipe">${esc(recipe.name)}</span>
+        </span>
+        ${conflicts.length ? `<span class="slot-warn" title="Family dislike">⚠️</span>` : `<span class="today-slot-chevron">›</span>`}
+      </button>`;
+  }
+  return `
+    <button class="today-slot empty" data-action="open-picker" data-day="${day.key}" data-slot="${slotName}">
+      <span class="slot-dot outline" style="border-color:${style.c};color:${style.c}">＋</span>
+      <span class="slot-text">
+        <span class="slot-label-sm">${slotName}</span>
+        <span class="today-slot-recipe" style="color:var(--inkSoft);font-weight:500;">Not planned yet</span>
+      </span>
+    </button>`;
+}
+const SLOT_ORDER = ["Breakfast","Lunch","Dinner","Snack"];
+function slotRowHTML(day, slotName){
+  const style = CATEGORY_STYLE[slotName];
+  const recipeId = day.meals[slotName];
+  const recipe = recipeId ? findRecipe(recipeId) : null;
+  if(recipe){
+    const conflicts = conflictsFor(recipe, state.members);
+    return `
+      <button class="slot-row filled" data-action="open-picker" data-day="${day.key}" data-slot="${slotName}">
+        <span class="slot-dot" style="background:${style.c}"></span>
+        <span class="slot-text">
+          <span class="slot-label-sm">${slotName}${recipe.prepTime<=30 ? ' · ⏱️' : ''}</span>
+          <span class="slot-recipe">${esc(recipe.name)}</span>
+        </span>
+        ${conflicts.length ? `<span class="slot-warn" title="Family dislike">⚠️</span>` : ""}
+      </button>`;
+  }
+  return `
+    <button class="slot-row empty" data-action="open-picker" data-day="${day.key}" data-slot="${slotName}">
+      <span class="slot-dot outline" style="border-color:${style.c};color:${style.c}">＋</span>
+      <span class="slot-text"><span class="slot-label-sm">${slotName}</span></span>
+    </button>`;
+}
+function dayCardHTML(d){
+  const isToday = d.key === getTodayKey();
+  return `
+    <div class="daycard ${isToday ? 'today' : ''}">
+      <div class="daycard-top">
+        <div class="daycard-name serif">${d.short}${isToday ? ' <span class="today-chip">TODAY</span>' : ''}</div>
+        <div style="display:flex;gap:6px;">
+          <button class="clockbtn" data-action="autofill-day" data-day="${d.key}" title="Auto-fill this day">🔀</button>
+          <button class="clockbtn ${d.quickRequired?'active':''}" data-action="toggle-day-quick" data-day="${d.key}" title="Needs quick meals">⏱️</button>
+        </div>
+      </div>
+      <div class="slots">
+        ${SLOT_ORDER.map(s => slotRowHTML(d, s)).join("")}
+      </div>
+    </div>`;
+}
+
+/* ---------------------------------- render: recipes tab ---------------------------------- */
+function renderRecipes(){
+  const cats = ["All","Breakfast","Lunch","Dinner","Snack"];
+  const f = state.recipesFilter;
+  const favCount = Object.keys(state.favouriteIds).length;
+  const hiddenCount = Object.keys(state.dislikedIds).length;
+  let list = state.recipes;
+  if(f.show === "favourites") list = list.filter(r => isFavourite(r.id));
+  else if(f.show === "hidden") list = list.filter(r => isDisliked(r.id));
+  else list = list.filter(r => !isDisliked(r.id));
+  list = list
+    .filter(r => f.cat === "All" || r.category === f.cat)
+    .filter(r => f.time === "all" || (f.time === "quick" ? r.prepTime <= 30 : r.prepTime > 30))
+    .filter(r => f.diet === "all" || (r.tags||[]).includes(f.diet));
+  return `
+    <div class="top-row" style="padding-bottom:0;">
+      <div>
+        <h1 class="page-title serif">Recipe box</h1>
+        <p class="page-sub">${state.recipes.length} recipes</p>
+      </div>
+      <button class="fab" data-action="open-add-recipe">＋</button>
+    </div>
+    <div class="px5" style="padding-top:12px;padding-bottom:10px;">
+      <input id="recipeSearchInput" class="field" style="margin-bottom:0;" placeholder="Search recipes or ingredients..." autocomplete="off" />
+    </div>
+    <div class="pillrow" style="padding-bottom:8px;">
+      <button class="pill ${f.show==='active'?'active':''}" style="${f.show==='active'?`background:${COLOR.ink}`:''}" data-action="recipes-set-show" data-value="active">All recipes</button>
+      <button class="pill ${f.show==='favourites'?'active':''}" style="${f.show==='favourites'?`background:${COLOR.mustard}`:''}" data-action="recipes-set-show" data-value="favourites">⭐ Favourites${favCount?` (${favCount})`:""}</button>
+      <button class="pill ${f.show==='hidden'?'active':''}" style="${f.show==='hidden'?`background:${COLOR.berry}`:''}" data-action="recipes-set-show" data-value="hidden">👎 Hidden${hiddenCount?` (${hiddenCount})`:""}</button>
+    </div>
+    <div class="pillrow" style="padding-bottom:8px;">
+      ${cats.map(c => `<button class="pill ${f.cat===c?'active':''}" style="${f.cat===c?`background:${COLOR.sage}`:''}" data-action="recipes-set-cat" data-value="${c}">${c}</button>`).join("")}
+    </div>
+    <div class="pillrow" style="padding-bottom:8px;">
+      <button class="pill ${f.time==='all'?'active':''}" style="${f.time==='all'?`background:${COLOR.ink}`:''}" data-action="recipes-set-time" data-value="all">Any time</button>
+      <button class="pill ${f.time==='quick'?'active':''}" style="${f.time==='quick'?`background:${COLOR.sage}`:''}" data-action="recipes-set-time" data-value="quick">⏱️ Quick</button>
+      <button class="pill ${f.time==='standard'?'active':''}" style="${f.time==='standard'?`background:${COLOR.teal}`:''}" data-action="recipes-set-time" data-value="standard">🍲 Standard</button>
+    </div>
+    <div class="pillrow">
+      <button class="pill ${f.diet==='all'?'active':''}" style="${f.diet==='all'?`background:${COLOR.ink}`:''}" data-action="recipes-set-diet" data-value="all">All diets</button>
+      <button class="pill ${f.diet==='Healthy'?'active':''}" style="${f.diet==='Healthy'?`background:${TAG_STYLE.Healthy.c}`:''}" data-action="recipes-set-diet" data-value="Healthy">🌱 Healthy</button>
+      <button class="pill ${f.diet==='Kid-Friendly'?'active':''}" style="${f.diet==='Kid-Friendly'?`background:${TAG_STYLE['Kid-Friendly'].c}`:''}" data-action="recipes-set-diet" data-value="Kid-Friendly">🧒 Kid-Friendly</button>
+      <button class="pill ${f.diet==='Slow Cooker'?'active':''}" style="${f.diet==='Slow Cooker'?`background:${TAG_STYLE['Slow Cooker'].c}`:''}" data-action="recipes-set-diet" data-value="Slow Cooker">🥘 Slow Cooker</button>
+    </div>
+    ${f.show==='hidden' && list.length ? `<p class="page-sub" style="padding:0 20px 8px;">Hidden recipes won't appear in the meal picker or auto-fill. Tap 👎 again to bring one back.</p>` : ""}
+    ${list.length ? `<div class="grid2">${list.map(r => recipeCardHTML(r,false)).join("")}</div>` : `<div class="shop-empty" style="margin:0 20px;">${f.show==='favourites' ? "No favourites yet — tap ☆ on any recipe card to save it here." : f.show==='hidden' ? "Nothing hidden — tap 👎 on a recipe you don't want suggested." : "No recipes match these filters."}</div>`}
+    <div id="recipeSearchEmpty" style="display:none;text-align:center;padding:20px 20px 32px;font-size:14px;color:var(--inkSoft);">No recipes match your search.</div>`;
+}
+
+/* ---------------------------------- render: shopping tab ---------------------------------- */
+function buildShoppingList(){
+  const map = new Map();
+  let mealCount = 0;
+  state.week.forEach(d => {
+    SLOT_ORDER.forEach(slot => {
+      const recipeId = d.meals[slot];
+      const recipe = recipeId ? findRecipe(recipeId) : null;
+      if(!recipe) return;
+      mealCount++;
+      recipe.ingredients.forEach(ing => {
+        const key = ing.name.toLowerCase() + "|" + ing.unit.toLowerCase();
+        if(map.has(key)) map.get(key).qty += ing.qty;
+        else map.set(key, { ...ing });
+      });
+    });
+  });
+  const grouped = {};
+  ING_CATEGORIES.forEach(c => grouped[c] = []);
+  Array.from(map.entries()).forEach(([key, ing]) => {
+    const cat = grouped[ing.category] ? ing.category : "Other";
+    grouped[cat].push({ key, ...ing });
+  });
+  Object.values(grouped).forEach(arr => arr.sort((a,b)=>a.name.localeCompare(b.name)));
+  return { grouped, mealCount, total: map.size };
+}
+function renderShopping(){
+  const { grouped, mealCount, total } = buildShoppingList();
+  return `
+    <div class="top-row" style="padding-bottom:4px;">
+      <div>
+        <h1 class="page-title serif">Shopping list</h1>
+        <p class="page-sub">${total===0 ? "Nothing planned yet" : `${total} items from ${mealCount} planned meal${mealCount===1?'':'s'}`}</p>
+      </div>
+    </div>
+    ${total===0 ? `
+      <div class="shop-empty">🛒<br/><br/>Plan some meals in the Week tab and your list will build itself here.</div>
+    ` : ING_CATEGORIES.filter(c => grouped[c].length).map(cat => `
+      <div class="shop-group">
+        <div class="shop-cat">${cat}</div>
+        <div class="shop-list">
+          ${grouped[cat].map(ing => `
+            <button class="shop-item" data-action="shopping-toggle-item" data-key="${esc(ing.key)}">
+              <span class="checkbox ${state.shoppingChecked[ing.key]?'checked':''}">${state.shoppingChecked[ing.key]?'✓':''}</span>
+              <span class="shop-item-name ${state.shoppingChecked[ing.key]?'checked':''}">${esc(ing.name)}</span>
+              <span class="shop-item-qty">${fmtQty(ing.qty)} ${esc(ing.unit)}</span>
+            </button>`).join("")}
+        </div>
+      </div>`).join("")}`;
+}
+
+/* ---------------------------------- render: family tab ---------------------------------- */
+function renderFamily(){
+  return `
+    <div class="top-row" style="padding-bottom:4px;">
+      <div>
+        <h1 class="page-title serif">The family</h1>
+        <p class="page-sub">Set what everyone skips — the meal picker will flag it for you.</p>
+      </div>
+    </div>
+    <div style="margin-top:8px;">
+      ${state.members.map(m => memberCardHTML(m)).join("")}
+    </div>
+    <div class="add-member-box">
+      <input id="newMemberInput" placeholder="Add family member" value="${esc(state.newMemberName)}" />
+      <button class="round-btn" data-action="family-add-member">＋</button>
+    </div>`;
+}
+function memberCardHTML(m){
+  const dropdownOpen = state.familyDropdownOpenId === m.id;
+  const remaining = DISLIKE_TAGS.filter(t => !m.dislikes.includes(t));
+  return `
+    <div class="member-card">
+      <div class="member-top">
+        <div class="member-id">
+          <div class="avatar" style="background:${m.color}">${esc(m.name.charAt(0).toUpperCase())}</div>
+          <span class="member-name serif">${esc(m.name)}</span>
+        </div>
+        <button data-action="family-remove-member" data-id="${m.id}" style="color:var(--inkSoft);padding:6px;">🗑️</button>
+      </div>
+      <div class="dislikes-row">
+        ${m.dislikes.map(d => `
+          <span class="chip">${esc(d)}<button data-action="family-remove-dislike" data-id="${m.id}" data-tag="${esc(d)}">✕</button></span>`).join("")}
+        <div style="position:relative;">
+          <button class="add-dislike-btn" data-action="family-toggle-dropdown" data-id="${m.id}">＋ Dislike</button>
+          ${dropdownOpen ? `
+            <div class="dropdown">
+              <input id="dislikeSearchInput" class="dropdown-search" placeholder="Search foods..." autocomplete="off" />
+              <div class="dropdown-list">
+                ${remaining.length ? remaining.map(t => `<button class="dislike-option" data-search="${esc(t.toLowerCase())}" data-action="family-add-dislike" data-id="${m.id}" data-tag="${esc(t)}">${esc(t)}</button>`).join("") : `<div style="padding:8px 10px;font-size:12.5px;color:var(--inkSoft);">All set</div>`}
+                <div class="dropdown-no-match" style="display:none;padding:8px 10px;font-size:12.5px;color:var(--inkSoft);">No matches</div>
+              </div>
+            </div>` : ""}
+        </div>
+      </div>
+    </div>`;
+}
+
+/* ---------------------------------- render: sheets ---------------------------------- */
+function renderSheet(){
+  if(!state.sheet) return "";
+  let inner = "";
+  if(state.sheet.type === "picker") inner = pickerSheetHTML(state.sheet);
+  else if(state.sheet.type === "detail") inner = detailSheetHTML(state.sheet);
+  else if(state.sheet.type === "add-recipe") inner = addRecipeSheetHTML(state.sheet);
+  else if(state.sheet.type === "confirm-clear") inner = confirmClearSheetHTML();
+  return `<div class="sheet-backdrop" data-action="close-sheet"></div>
+    <div class="sheet-wrap">${inner}</div>`;
+}
+function confirmClearSheetHTML(){
+  return `
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title serif">Clear the week?</div>
+        <button class="sheet-close" data-action="close-sheet">✕</button>
+      </div>
+      <div class="sheet-body">
+        <p style="font-size:14.5px;color:var(--ink);margin:0 0 20px;line-height:1.5;">This will remove every planned meal from all 7 days. This can't be undone.</p>
+        <button class="btn-primary" style="background:${COLOR.berry};margin-bottom:10px;" data-action="confirm-clear-yes">Clear everything</button>
+        <button class="btn-ghost" style="width:100%;justify-content:center;padding:10px;color:var(--inkSoft);" data-action="close-sheet">Cancel</button>
+      </div>
+    </div>`;
+}
+
+function pickerSheetHTML(sheet){
+  const day = findDay(sheet.dayKey);
+  const slot = sheet.slot;
+  const style = CATEGORY_STYLE[slot];
+  const list = state.recipes.filter(r => {
+    if(r.category !== slot) return false;
+    if(isDisliked(r.id)) return false;
+    if(sheet.timeFilter === "quick" && r.prepTime > 30) return false;
+    if(sheet.timeFilter === "standard" && r.prepTime <= 30) return false;
+    if(sheet.hideConflicts && conflictsFor(r, state.members).length > 0) return false;
+    return true;
+  }).sort((a, b) => (isFavourite(b.id)?1:0) - (isFavourite(a.id)?1:0));
+  return `
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title serif">${slot} for ${day.label}</div>
+        <button class="sheet-close" data-action="close-sheet">✕</button>
+      </div>
+      <div class="sheet-body">
+        <span class="badge" style="color:${style.c};background:${style.bg};margin-bottom:14px;display:inline-flex;">${slot}</span>
+        <span class="label">Prep time</span>
+        <div class="pillrow" style="padding:0 0 12px;">
+          <button class="pill ${sheet.timeFilter==='all'?'active':''}" style="${sheet.timeFilter==='all'?`background:${COLOR.ink}`:''}" data-action="picker-set-time" data-value="all">All meals</button>
+          <button class="pill ${sheet.timeFilter==='quick'?'active':''}" style="${sheet.timeFilter==='quick'?`background:${COLOR.sage}`:''}" data-action="picker-set-time" data-value="quick">⏱️ Quick (≤30 min)</button>
+          <button class="pill ${sheet.timeFilter==='standard'?'active':''}" style="${sheet.timeFilter==='standard'?`background:${COLOR.teal}`:''}" data-action="picker-set-time" data-value="standard">🍲 Standard (30+ min)</button>
+        </div>
+        <div class="pillrow" style="padding:0 0 16px;">
+          <button class="pill ${sheet.hideConflicts?'active':''}" style="${sheet.hideConflicts?`background:${COLOR.berry}`:''}" data-action="picker-toggle-hide">Hide family dislikes</button>
+        </div>
+        ${day.meals[slot] ? `<button class="btn-ghost" style="color:${COLOR.berry};margin-bottom:14px;" data-action="picker-clear-meal">✕ Remove current ${slot.toLowerCase()}</button>` : ""}
+        ${list.length===0 ? `<div style="text-align:center;padding:40px 10px;font-size:14px;color:var(--inkSoft);">No ${slot.toLowerCase()} recipes match these filters. Try turning one off, or add a new recipe from the Recipes tab.</div>` : list.map(r => recipePickHTML(r)).join("")}
+      </div>
+    </div>`;
+}
+
+function detailSheetHTML(sheet){
+  const r = findRecipe(sheet.recipeId);
+  if(!r) return "";
+  const style = CATEGORY_STYLE[r.category] || CATEGORY_STYLE.Dinner;
+  const conflicts = conflictsFor(r, state.members);
+  const fav = isFavourite(r.id), dis = isDisliked(r.id);
+  return `
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title serif">${esc(r.name)}</div>
+        <button class="sheet-close" data-action="close-sheet">✕</button>
+      </div>
+      <div class="sheet-body">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+          <span class="badge" style="color:${style.c};background:${style.bg}">${esc(r.category)}</span>
+          <span style="font-size:13px;color:var(--inkSoft);">⏱️ ${r.prepTime} min</span>
+          ${tagBadgesHTML(r)}
+        </div>
+        <div class="pillrow" style="padding:0 0 16px;overflow:visible;">
+          <button class="pill ${fav?'active':''}" style="${fav?`background:${COLOR.mustard}`:''}" data-action="toggle-favourite" data-id="${r.id}">${fav?'⭐ Favourited':'☆ Add to Favourites'}</button>
+          <button class="pill ${dis?'active':''}" style="${dis?`background:${COLOR.berry}`:''}" data-action="toggle-dislike-recipe" data-id="${r.id}">${dis?"👎 Hidden from planning":"👎 Don't suggest this"}</button>
+        </div>
+        ${conflicts.length ? `
+          <div class="warn-box">
+            <div class="warn-title">⚠️ Heads up</div>
+            ${conflicts.map(c => `<div class="warn-line">${esc(c.member.name)} isn't keen on ${esc(c.tags.join(", ").toLowerCase())}</div>`).join("")}
+          </div>` : ""}
+        <span class="label">Ingredients</span>
+        <ul class="ing-list">
+          ${r.ingredients.map(ing => `<li><span>${esc(ing.name)}</span><span class="qty">${fmtQty(ing.qty)} ${esc(ing.unit)}</span></li>`).join("")}
+        </ul>
+        <span class="label">Method</span>
+        <ol class="method-list">
+          ${generateSteps(r).map(step => `<li>${esc(step)}</li>`).join("")}
+        </ol>
+        <button class="btn-ghost" style="color:${COLOR.berry};background:${COLOR.berrySoft};padding:10px 12px;border-radius:12px;" data-action="delete-recipe" data-id="${r.id}">🗑️ Remove recipe</button>
+      </div>
+    </div>`;
+}
+
+function addRecipeSheetHTML(sheet){
+  return `
+    <div class="sheet">
+      <div class="sheet-head">
+        <div class="sheet-title serif">New recipe</div>
+        <button class="sheet-close" data-action="close-sheet">✕</button>
+      </div>
+      <div class="sheet-body">
+        <span class="label">Name</span>
+        <input id="recipeNameInput" class="field" placeholder="Sunday Roast Chicken" value="${esc(sheet.name)}" />
+        <div class="row2">
+          <div>
+            <span class="label">Category</span>
+            <select id="recipeCategorySelect" class="field">
+              ${Object.keys(CATEGORY_STYLE).map(c => `<option value="${c}" ${sheet.category===c?'selected':''}>${c}</option>`).join("")}
+            </select>
+          </div>
+          <div>
+            <span class="label">Prep time (min)</span>
+            <input id="recipePrepInput" class="field" type="number" value="${esc(sheet.prepTime)}" />
+          </div>
+        </div>
+        <span class="label">Contains (helps flag family dislikes)</span>
+        <div class="pillrow" style="flex-wrap:wrap;padding:0 0 16px;overflow:visible;">
+          ${DISLIKE_TAGS.map(t => `<button class="pill ${sheet.flags.includes(t)?'active':''}" style="${sheet.flags.includes(t)?`background:${COLOR.berry}`:''}" data-action="add-recipe-toggle-flag" data-value="${t}">${t}</button>`).join("")}
+        </div>
+        <span class="label">Diet tags</span>
+        <div class="pillrow" style="flex-wrap:wrap;padding:0 0 16px;overflow:visible;">
+          ${Object.keys(TAG_STYLE).map(t => `<button class="pill ${sheet.tags.includes(t)?'active':''}" style="${sheet.tags.includes(t)?`background:${TAG_STYLE[t].c}`:''}" data-action="add-recipe-toggle-tag" data-value="${t}">${TAG_STYLE[t].icon} ${t}</button>`).join("")}
+        </div>
+        <span class="label">Ingredients</span>
+        <div id="ingredientRows">
+          ${sheet.rows.map((row,i) => `
+            <div class="ing-row">
+              <input class="ing-name" placeholder="Ingredient" value="${esc(row.name)}" />
+              <input class="ing-qty" placeholder="Qty" inputmode="decimal" value="${esc(row.qty)}" />
+              <input class="ing-unit" placeholder="unit" value="${esc(row.unit)}" />
+              <select class="ing-cat">
+                ${ING_CATEGORIES.map(c => `<option ${row.category===c?'selected':''}>${c}</option>`).join("")}
+              </select>
+              <button class="ing-remove" data-action="add-recipe-remove-row" data-index="${i}">✕</button>
+            </div>`).join("")}
+        </div>
+        <button class="btn-ghost" style="color:${COLOR.sage};margin-bottom:24px;" data-action="add-recipe-add-row">＋ Add ingredient</button>
+        <button class="btn-primary" data-action="add-recipe-save" ${sheet.name.trim() ? "" : "disabled"}>Save recipe</button>
+      </div>
+    </div>`;
+}
+
+/* ---------------------------------- master render ---------------------------------- */
+function render(){
+  document.getElementById("view").innerHTML =
+    state.tab==="week" ? renderWeek() :
+    state.tab==="recipes" ? renderRecipes() :
+    state.tab==="shopping" ? renderShopping() : renderFamily();
+  document.getElementById("navRoot").innerHTML = renderNav();
+  const sheetRoot = document.getElementById("sheetRoot");
+  if(state.sheet){ sheetRoot.classList.add("open"); sheetRoot.innerHTML = renderSheet(); }
+  else { sheetRoot.classList.remove("open"); sheetRoot.innerHTML = ""; }
+  saveState();
+}
+function renderSheetOnly(){
+  const sheetRoot = document.getElementById("sheetRoot");
+  if(state.sheet){ sheetRoot.classList.add("open"); sheetRoot.innerHTML = renderSheet(); }
+  else { sheetRoot.classList.remove("open"); sheetRoot.innerHTML = ""; }
+}
+
+/* ---------------------------------- sync helpers (preserve typed text before re-render) ---------------------------------- */
+function syncAddRecipeForm(){
+  if(!state.sheet || state.sheet.type !== "add-recipe") return;
+  const nameEl = document.getElementById("recipeNameInput");
+  const catEl = document.getElementById("recipeCategorySelect");
+  const prepEl = document.getElementById("recipePrepInput");
+  if(nameEl) state.sheet.name = nameEl.value;
+  if(catEl) state.sheet.category = catEl.value;
+  if(prepEl) state.sheet.prepTime = prepEl.value;
+  const rowsEls = document.querySelectorAll("#ingredientRows .ing-row");
+  const rows = [];
+  rowsEls.forEach(rowEl => {
+    rows.push({
+      name: rowEl.querySelector(".ing-name").value,
+      qty: rowEl.querySelector(".ing-qty").value,
+      unit: rowEl.querySelector(".ing-unit").value,
+      category: rowEl.querySelector(".ing-cat").value,
+    });
+  });
+  if(rows.length) state.sheet.rows = rows;
+}
+function syncFamilyForm(){
+  const el = document.getElementById("newMemberInput");
+  if(el) state.newMemberName = el.value;
+}
+
+/* ---------------------------------- event delegation ---------------------------------- */
+document.body.addEventListener("click", (e) => {
+  if(e.target.classList && e.target.classList.contains("sheet-backdrop")){
+    state.sheet = null; renderSheetOnly(); return;
+  }
+  const el = e.target.closest("[data-action]");
+  if(!el) return;
+  const action = el.dataset.action;
+
+  switch(action){
+    case "set-tab":
+      state.familyDropdownOpenId = null;
+      state.tab = el.dataset.tab;
+      render();
+      break;
+
+    case "open-picker": {
+      const day = findDay(el.dataset.day);
+      const slot = el.dataset.slot;
+      state.sheet = { type:"picker", dayKey: day.key, slot, timeFilter: day.quickRequired ? "quick" : "all", hideConflicts: true };
+      renderSheetOnly();
+      break;
+    }
+    case "toggle-day-quick": {
+      const d = findDay(el.dataset.day);
+      d.quickRequired = !d.quickRequired;
+      render();
+      break;
+    }
+    case "autofill-day": {
+      const d = findDay(el.dataset.day);
+      SLOT_ORDER.forEach(slot => {
+        if(!d.meals[slot]){
+          const pick = pickRecipeForSlot(d, slot);
+          if(pick) d.meals[slot] = pick.id;
+        }
+      });
+      render();
+      break;
+    }
+    case "autofill-week": {
+      state.week.forEach(d => {
+        SLOT_ORDER.forEach(slot => {
+          if(!d.meals[slot]){
+            const pick = pickRecipeForSlot(d, slot);
+            if(pick) d.meals[slot] = pick.id;
+          }
+        });
+      });
+      render();
+      break;
+    }
+    case "clear-week": {
+      state.sheet = { type: "confirm-clear" };
+      renderSheetOnly();
+      break;
+    }
+    case "confirm-clear-yes": {
+      state.week.forEach(d => { SLOT_ORDER.forEach(slot => { d.meals[slot] = null; }); });
+      state.sheet = null;
+      render();
+      break;
+    }
+    case "close-sheet":
+      state.sheet = null;
+      renderSheetOnly();
+      break;
+
+    case "picker-set-time":
+      state.sheet.timeFilter = el.dataset.value;
+      renderSheetOnly();
+      break;
+    case "picker-toggle-hide":
+      state.sheet.hideConflicts = !state.sheet.hideConflicts;
+      renderSheetOnly();
+      break;
+    case "picker-pick-recipe": {
+      const day = findDay(state.sheet.dayKey);
+      day.meals[state.sheet.slot] = el.dataset.id;
+      state.sheet = null;
+      render();
+      break;
+    }
+    case "picker-clear-meal": {
+      const day = findDay(state.sheet.dayKey);
+      day.meals[state.sheet.slot] = null;
+      state.sheet = null;
+      render();
+      break;
+    }
+
+    case "open-recipe-detail":
+      state.sheet = { type:"detail", recipeId: el.dataset.id };
+      renderSheetOnly();
+      break;
+    case "delete-recipe": {
+      const id = el.dataset.id;
+      state.recipes = state.recipes.filter(r => r.id !== id);
+      state.week.forEach(d => { SLOT_ORDER.forEach(s => { if(d.meals[s] === id) d.meals[s] = null; }); });
+      delete state.favouriteIds[id];
+      delete state.dislikedIds[id];
+      state.sheet = null;
+      render();
+      break;
+    }
+
+    case "open-add-recipe":
+      state.sheet = { type:"add-recipe", name:"", category:"Dinner", prepTime:30, flags:[], tags:[], rows:[{name:"",qty:"",unit:"",category:"Produce"}] };
+      renderSheetOnly();
+      break;
+    case "add-recipe-toggle-flag":
+      syncAddRecipeForm();
+      { const t = el.dataset.value;
+        state.sheet.flags = state.sheet.flags.includes(t) ? state.sheet.flags.filter(x=>x!==t) : [...state.sheet.flags, t]; }
+      renderSheetOnly();
+      break;
+    case "add-recipe-toggle-tag":
+      syncAddRecipeForm();
+      { const t = el.dataset.value;
+        state.sheet.tags = state.sheet.tags.includes(t) ? state.sheet.tags.filter(x=>x!==t) : [...state.sheet.tags, t]; }
+      renderSheetOnly();
+      break;
+    case "add-recipe-add-row":
+      syncAddRecipeForm();
+      state.sheet.rows.push({name:"",qty:"",unit:"",category:"Produce"});
+      renderSheetOnly();
+      break;
+    case "add-recipe-remove-row":
+      syncAddRecipeForm();
+      state.sheet.rows.splice(parseInt(el.dataset.index), 1);
+      if(state.sheet.rows.length === 0) state.sheet.rows.push({name:"",qty:"",unit:"",category:"Produce"});
+      renderSheetOnly();
+      break;
+    case "add-recipe-save": {
+      syncAddRecipeForm();
+      const s = state.sheet;
+      if(!s.name.trim()) break;
+      const ingredients = s.rows.filter(r => r.name.trim()).map(r => ({ name:r.name.trim(), qty: parseFloat(r.qty)||1, unit:(r.unit||"").trim(), category:r.category }));
+      if(ingredients.length === 0) break;
+      state.recipes.unshift({ id:nid(), name:s.name.trim(), category:s.category, prepTime: parseInt(s.prepTime)||0, flags:s.flags, tags:s.tags||[], ingredients });
+      state.sheet = null;
+      render();
+      break;
+    }
+
+    case "recipes-set-cat":
+      state.recipesFilter.cat = el.dataset.value;
+      render();
+      break;
+    case "recipes-set-time":
+      state.recipesFilter.time = el.dataset.value;
+      render();
+      break;
+    case "recipes-set-diet":
+      state.recipesFilter.diet = el.dataset.value;
+      render();
+      break;
+    case "recipes-set-show":
+      state.recipesFilter.show = el.dataset.value;
+      render();
+      break;
+    case "toggle-favourite":
+      toggleFavourite(el.dataset.id);
+      render();
+      break;
+    case "toggle-dislike-recipe":
+      toggleDisliked(el.dataset.id);
+      render();
+      break;
+
+    case "shopping-toggle-item":
+      state.shoppingChecked[el.dataset.key] = !state.shoppingChecked[el.dataset.key];
+      render();
+      break;
+
+    case "family-remove-member":
+      state.members = state.members.filter(m => m.id !== el.dataset.id);
+      render();
+      break;
+    case "family-toggle-dropdown":
+      syncFamilyForm();
+      state.familyDropdownOpenId = state.familyDropdownOpenId === el.dataset.id ? null : el.dataset.id;
+      render();
+      break;
+    case "family-add-dislike": {
+      syncFamilyForm();
+      const m = state.members.find(x => x.id === el.dataset.id);
+      if(m && !m.dislikes.includes(el.dataset.tag)) m.dislikes.push(el.dataset.tag);
+      state.familyDropdownOpenId = null;
+      render();
+      break;
+    }
+    case "family-remove-dislike": {
+      syncFamilyForm();
+      const m = state.members.find(x => x.id === el.dataset.id);
+      if(m) m.dislikes = m.dislikes.filter(d => d !== el.dataset.tag);
+      render();
+      break;
+    }
+    case "family-add-member": {
+      const nameEl = document.getElementById("newMemberInput");
+      const name = nameEl ? nameEl.value.trim() : "";
+      if(!name) break;
+      const color = MEMBER_COLORS[state.members.length % MEMBER_COLORS.length];
+      state.members.push({ id:nid(), name, color, dislikes:[] });
+      state.newMemberName = "";
+      render();
+      break;
+    }
+  }
+});
+
+/* enter-to-add for new member field (delegated, since field is re-rendered) */
+document.body.addEventListener("keydown", (e) => {
+  if(e.key === "Enter" && e.target && e.target.id === "newMemberInput"){
+    document.querySelector('[data-action="family-add-member"]')?.click();
+  }
+});
+
+/* live search filtering — filters DOM in place so the search input never loses focus */
+document.body.addEventListener("input", (e) => {
+  if(e.target.id === "dislikeSearchInput"){
+    const q = e.target.value.trim().toLowerCase();
+    let anyVisible = false;
+    document.querySelectorAll(".dislike-option").forEach(btn => {
+      const match = btn.dataset.search.includes(q);
+      btn.style.display = match ? "" : "none";
+      if(match) anyVisible = true;
+    });
+    const noMatch = document.querySelector(".dropdown-no-match");
+    if(noMatch) noMatch.style.display = anyVisible ? "none" : "block";
+  }
+  if(e.target.id === "recipeSearchInput"){
+    const q = e.target.value.trim().toLowerCase();
+    let anyVisible = false;
+    document.querySelectorAll(".grid2 .rcard").forEach(card => {
+      const match = card.dataset.search.includes(q);
+      card.style.display = match ? "" : "none";
+      if(match) anyVisible = true;
+    });
+    const empty = document.getElementById("recipeSearchEmpty");
+    if(empty) empty.style.display = anyVisible ? "none" : "block";
+  }
+});
+
+render();
+
+if("serviceWorker" in navigator && (location.protocol === "https:" || location.hostname === "localhost")){
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./service-worker.js").catch(() => {});
+  });
+}
+</script>
+</body>
+</html>
